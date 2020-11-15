@@ -1,28 +1,55 @@
-// This is a "stub" file.  It's a little start on your solution.
-// It's not a complete solution though; you have to write some code.
-
-// Package triangle should have a package comment that summarizes what it's about.
-// https://golang.org/doc/effective_go.html#commentary
+// Package triangle solves the Exercism 'Triangle' problem.
 package triangle
 
+import "math"
 
-// Notice KindFromSides() returns this type. Pick a suitable data type.
-type Kind
+// Kind refers to a type of triangle (see the constants Equ, Iso, Sca, NaT).
+type Kind int
 
 const (
-    // Pick values for the following identifiers used by the test program.
-    NaT // not a triangle
-    Equ // equilateral
-    Iso // isosceles
-    Sca // scalene
+	// Equ is a triangle with all three sides having the same length.
+	Equ Kind = 3
+
+	// Iso is a triagle with exactly two sides having the same length.
+	Iso Kind = 2
+
+	// Sca is a triangle with every side having different lengths.
+	Sca Kind = 1
+
+	// NaT is not a triangle.
+	NaT Kind = -1
 )
 
-// KindFromSides should have a comment documenting it.
+// KindFromSides takes the lengths of the sides of a triangle and
+// determines what Kind it is.
 func KindFromSides(a, b, c float64) Kind {
-	// Write some code here to pass the test suite.
-	// Then remove all the stock comments.
-	// They're here to help you get started but they only clutter a finished solution.
-	// If you leave them in, reviewers may protest!
-	var k Kind
-	return k
+	if !isTriangle(a, b, c) {
+		return NaT
+	}
+
+	if isEquilateral(a, b, c) {
+		return Equ
+	}
+
+	if isScalene(a, b, c) {
+		return Sca
+	}
+
+	return Iso
+}
+
+func isTriangle(a, b, c float64) bool {
+	sidesPositive := a > 0 && b > 0 && c > 0
+	inf := math.Inf(1)
+	sidesFinite := a < inf && b < inf && c < inf
+	passesInequality := (b+c >= a) && (a+c >= b) && (a+b >= c)
+	return sidesPositive && sidesFinite && passesInequality
+}
+
+func isEquilateral(a, b, c float64) bool {
+	return a == b && a == c && b == c
+}
+
+func isScalene(a, b, c float64) bool {
+	return (a != b) && (a != c) && (b != c)
 }
