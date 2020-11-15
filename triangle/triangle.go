@@ -3,15 +3,15 @@ package triangle
 
 import "math"
 
-// Kind refers to a type of triangle (see the constants Equ, Iso, Sca, NaT).
+// Kind refers to a type of triangle (see Equ, Iso, Sca, NaT).
 type Kind int
 
 const (
-	// Equ is a triangle with all three sides having the same length.
+	// Equ is an equilateral triangle.
 	Equ Kind = 3
-	// Iso is a triagle with exactly two sides having the same length.
+	// Iso is an isosceles triangle.
 	Iso Kind = 2
-	// Sca is a triangle with every side having different lengths.
+	// Sca is a scalene triangle.
 	Sca Kind = 1
 	// NaT is not a triangle.
 	NaT Kind = -1
@@ -39,7 +39,7 @@ func isTriangle(a, b, c float64) bool {
 }
 
 func isEquilateral(a, b, c float64) bool {
-	return a == b && a == c && b == c
+	return a == b && b == c
 }
 
 func isScalene(a, b, c float64) bool {
