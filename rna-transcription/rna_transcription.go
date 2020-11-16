@@ -2,24 +2,24 @@ package strand
 
 type replacer []byte
 
-var oldnew = replacer{
+var dnarna = replacer{
 	'C', 'G',
 	'G', 'C',
 	'T', 'A',
 	'A', 'U',
 }
 
-var maxK = len(oldnew) - 2
+var maxD = len(dnarna) - 2
 
-func ToRNA(old string) string {
-	length := len(old)
-	new := make([]byte, length)
+func ToRNA(dna string) string {
+	length := len(dna)
+	rna := make([]byte, length)
 	for i := 0; i < length; i++ {
-		for k := 0; k <= maxK; k += 2 {
-			if old[i] == oldnew[k] {
-				new[i] = oldnew[k+1]
+		for d := 0; d <= maxD; d += 2 {
+			if dna[i] == dnarna[d] {
+				rna[i] = dnarna[d+1]
 			}
 		}
 	}
-	return string(new)
+	return string(rna)
 }
