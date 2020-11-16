@@ -1,15 +1,62 @@
-// This is a "stub" file.  It's a little start on your solution.
-// It's not a complete solution though; you have to write some code.
-
-// Package bob should have a package comment that summarizes what it's about.
-// https://golang.org/doc/effective_go.html#commentary
+// Package bob solves the side exercise 'Bob'
 package bob
 
-// Hey should have a comment documenting it.
+import "strings"
+
+// Hey initiates a conversation with Bob
 func Hey(remark string) string {
-	// Write some code here to pass the test suite.
-	// Then remove all the stock comments.
-	// They're here to help you get started but they only clutter a finished solution.
-	// If you leave them in, reviewers may protest!
-	return ""
+	trimmed := strings.TrimSpace(remark)
+	tone := readTone(&trimmed)
+	return teenResponses[tone]
+}
+
+type tone int
+
+const (
+	question = tone(iota)
+	yell
+	yellQuestion
+	standard
+	zero
+)
+
+var teenResponses = map[tone]string{
+	question:     "Sure.",
+	yell:         "Whoa, chill out!",
+	yellQuestion: "Calm down, I know what I'm doing!",
+	standard:     "Whatever.",
+	zero:         "Fine. Be that way!",
+}
+
+func readTone(remark *string) tone {
+	if isEmpty(remark) {
+		return zero
+	}
+	if isQuestion(remark) {
+		if isYell(remark) {
+			return yellQuestion
+		} else {
+			return question
+		}
+	}
+	if isYell(remark) {
+		return yell
+	}
+	return standard
+}
+
+func isEmpty(s *string) bool {
+	return *s == ""
+}
+
+func isQuestion(s *string) bool {
+	str := *s
+	length := len(str)
+	lastChar := str[length-1]
+	return lastChar == '?'
+}
+
+func isYell(s *string) bool {
+	const caps = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	return strings.ContainsAny(*s, caps) && (*s == strings.ToUpper(*s))
 }
