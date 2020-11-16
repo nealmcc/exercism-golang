@@ -5,13 +5,12 @@ package proverb
 func Proverb(rhyme []string) []string {
 	length := len(rhyme)
 	proverb := make([]string, length)
-	if length == 0 {
-		return proverb
+	if length > 0 {
+		for i := 0; i < length-1; i++ {
+			proverb[i] = "For want of a " + rhyme[i] +
+				" the " + rhyme[i+1] + " was lost."
+		}
+		proverb[length-1] = "And all for the want of a " + rhyme[0] + "."
 	}
-	for i := 0; i < length-1; i++ {
-		proverb[i] = "For want of a " + rhyme[i] +
-			" the " + rhyme[i+1] + " was lost."
-	}
-	proverb[length-1] = "And all for the want of a " + rhyme[0] + "."
 	return proverb
 }
