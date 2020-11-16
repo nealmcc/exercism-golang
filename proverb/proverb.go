@@ -4,10 +4,10 @@ package proverb
 // Proverb constructs a saying to solve the programming challenge
 func Proverb(rhyme []string) []string {
 	length := len(rhyme)
-	if length == 0 {
-		return []string{}
-	}
 	proverb := make([]string, length)
+	if length == 0 {
+		return proverb
+	}
 	for i := 0; i < length-1; i++ {
 		proverb[i] = "For want of a " + rhyme[i] +
 			" the " + rhyme[i+1] + " was lost."
