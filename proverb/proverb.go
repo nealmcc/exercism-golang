@@ -1,15 +1,17 @@
-// This is a "stub" file.  It's a little start on your solution.
-// It's not a complete solution though; you have to write some code.
-
-// Package proverb should have a package comment that summarizes what it's about.
-// https://golang.org/doc/effective_go.html#commentary
+// Package proverb solves the Proverb side exercise from Exercism
 package proverb
 
-// Proverb should have a comment documenting it.
+// Proverb constructs a saying to solve the programming challenge
 func Proverb(rhyme []string) []string {
-	// Write some code here to pass the test suite.
-	// Then remove all the stock comments.
-	// They're here to help you get started but they only clutter a finished solution.
-	// If you leave them in, reviewers may protest!
-	return []string{}
+	length := len(rhyme)
+	if length == 0 {
+		return []string{}
+	}
+	proverb := make([]string, length)
+	for i := 0; i < length-1; i++ {
+		proverb[i] = "For want of a " + rhyme[i] +
+			" the " + rhyme[i+1] + " was lost."
+	}
+	proverb[length-1] = "And all for the want of a " + rhyme[0] + "."
+	return proverb
 }
