@@ -17,8 +17,8 @@ func Abbreviate(s string) string {
 }
 
 func IsWordPart(b byte) bool {
-	return 'A' <= b && b <= 'Z' ||
-		'a' <= b && b <= 'z' ||
+	return 'a' <= b && b <= 'z' ||
+		'A' <= b && b <= 'Z' ||
 		'\'' == b
 }
 
