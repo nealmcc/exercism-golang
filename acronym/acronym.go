@@ -1,15 +1,20 @@
-// This is a "stub" file.  It's a little start on your solution.
-// It's not a complete solution though; you have to write some code.
-
-// Package acronym should have a package comment that summarizes what it's about.
-// https://golang.org/doc/effective_go.html#commentary
+// Package holds a solution to the Exercism side-exercise of the same name
 package acronym
 
-// Abbreviate should have a comment documenting it.
+import (
+	"regexp"
+	"strings"
+)
+
+var re = regexp.MustCompile(`[a-zA-Z']+`)
+
+// Abbreviate creates an acronym for the given string
+// using the first letter of each word
 func Abbreviate(s string) string {
-	// Write some code here to pass the test suite.
-	// Then remove all the stock comments.
-	// They're here to help you get started but they only clutter a finished solution.
-	// If you leave them in, reviewers may protest!
-	return ""
+	words := re.FindAllString(s, -1)
+	acronym := make([]byte, len(words))
+	for i, word := range words {
+		acronym[i] = word[0]
+	}
+	return strings.ToUpper(string(acronym))
 }

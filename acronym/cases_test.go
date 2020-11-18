@@ -45,5 +45,11 @@ var stringTestCases = []acronymTest{
 	{
 		input:    "The Road _Not_ Taken",
 		expected: "TRNT",
+	}, {
+		input:    "123",
+		expected: "",
+	}, {
+		input:    "",
+		expected: "",
 	},
 }
