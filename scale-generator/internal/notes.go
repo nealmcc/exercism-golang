@@ -3,32 +3,37 @@ package internal
 
 import "strings"
 
+// note is our 'enum-like' collection of notes, accessed by id.
+// every pitch will have a distinct id, but may be referred
+// to by either its 'sharp' name (by default) or else its 'flat' name if
+// it has one.
+// notes without a 'flat' name will have their 'sharp' name repeated here.
 type note struct {
 	id       int
 	name     string
 	flatName string
+	pitch    *pitch
 }
 
-// count is the number of distinct pitches that we have notes for.
-var count int
+type pitch struct {
+	id    int
+	notes *[]note
+}
 
-// notes is our collection of notes, accessed by id.
-// Both A# and Bb will be represented by the same note.
-var notes map[int]*note
+// _count is the number of pitches that we have notes for.
+var _count int
+var notes = make(map[int]*note)
 
-// notesByName is our collection of notes, accessed by name.
-// Both uppercase and lowercase names work for finding the note.
-var notesByName map[string]*note
+// notesByName provides a performance shortcut to access notes by their name.
+// Both uppercase and lowercase names work for finding the note,
+// but the canonical 'names' of the note will still be uppercase.
+var notesByName = make(map[string]*note)
 
 // init() defines our collection of notes to be the chromatic scale.
 func init() {
-	count = 0
-	notes = make(map[int]*note)
-	notesByName = make(map[string]*note)
-
-	makeNote := func(name, flatName string) *note {
-		n := note{count, name, flatName}
-		count++
+	newNote := func(name, flatName string) *note {
+		n := note{_count, name, flatName, nil}
+		_count++
 		notes[n.id] = &n
 		return &n
 	}
@@ -38,29 +43,29 @@ func init() {
 		notesByName[strings.ToLower(name)] = n
 	}
 
-	addNote := func(name string) {
-		n := makeNote(name, name)
+	genNote := func(name string) {
+		n := newNote(name, name)
 		addByName(name, n)
 	}
 
-	addHalfNote := func(sharp, flat string) {
-		n := makeNote(sharp, flat)
+	genHalfNote := func(sharp, flat string) {
+		n := newNote(sharp, flat)
 		addByName(sharp, n)
 		addByName(flat, n)
 	}
 
-	addNote("A")
-	addHalfNote("A#", "Bb")
-	addNote("B")
-	addNote("C")
-	addHalfNote("C#", "Db")
-	addNote("D")
-	addHalfNote("D#", "Eb")
-	addNote("E")
-	addNote("F")
-	addHalfNote("F#", "Gb")
-	addNote("G")
-	addHalfNote("G#", "Ab")
+	genNote("A")
+	genHalfNote("A#", "Bb")
+	genNote("B")
+	genNote("C")
+	genHalfNote("C#", "Db")
+	genNote("D")
+	genHalfNote("D#", "Eb")
+	genNote("E")
+	genNote("F")
+	genHalfNote("F#", "Gb")
+	genNote("G")
+	genHalfNote("G#", "Ab")
 }
 
 // isTonicFlat checks if a scale with this tonic should use 'flat' names
@@ -69,7 +74,6 @@ func isTonicFlat(tonic string) bool {
 	switch tonic {
 	case "F", "Bb", "Eb", "Ab", "Db", "Gb", "d", "g", "c", "f", "bb", "eb":
 		return true
-
 	default:
 		return false
 	}
