@@ -5,44 +5,36 @@ type IScale interface {
 	GetNotes() []string
 }
 
-type scale struct {
-	useFlatNames bool
-	notes        []*note
-}
+type scale []*note
 
 // NewScale generates a scale beginning with tonic, using the given interval
 func NewScale(tonic string, interval string) IScale {
-	s := &scale{
-		useFlatNames: isTonicFlat(tonic),
-		notes:        make([]*note, len(interval)),
-	}
-
-	firstNote := notesByName[tonic]
-	id := firstNote.id
+	useFlatNames := isScaleFlat(tonic)
+	scale := make(scale, len(interval))
+	note := notes[tonic]
+	pitch := note.pitch
 	for i, delta := range interval {
-		s.notes[i] = notes[id]
-		id = (id + intervals[delta]) % _count
+		scale[i] = note
+		pitch = note.addInterval(delta)
+		note = pitch.getNote(useFlatNames)
 	}
-
-	return s
+	return scale
 }
 
-// each interval determines how many notes to go up by
-var intervals = map[rune]int{
-	'm': 1,
-	'M': 2,
-	'A': 3,
+func isScaleFlat(tonic string) bool {
+	switch tonic {
+	case "F", "Bb", "Eb", "Ab", "Db", "Gb", "d", "g", "c", "f", "bb", "eb":
+		return true
+	default:
+		return false
+	}
 }
 
 // GetNotes gets the names of the notes in this scale
-func (s *scale) GetNotes() []string {
-	names := make([]string, len(s.notes))
-	for i, n := range s.notes {
-		if s.useFlatNames {
-			names[i] = n.flatName
-		} else {
-			names[i] = n.name
-		}
+func (s scale) GetNotes() []string {
+	names := make([]string, len(s))
+	for i, n := range s {
+		names[i] = n.name
 	}
 	return names
 }

@@ -3,78 +3,92 @@ package internal
 
 import "strings"
 
-// note is our 'enum-like' collection of notes, accessed by id.
-// every pitch will have a distinct id, but may be referred
-// to by either its 'sharp' name (by default) or else its 'flat' name if
-// it has one.
-// notes without a 'flat' name will have their 'sharp' name repeated here.
+// a note is a label attached to a pitch.
 type note struct {
-	id       int
-	name     string
-	flatName string
-	pitch    *pitch
+	name  string
+	pitch *pitch
 }
 
+// a pitch can have one or two notes labelling it. The scale that
+// the pitch belongs to will determine which way to describe the pitch
+// (either sharp/default or flat)
 type pitch struct {
 	id    int
-	notes *[]note
+	sharp *note
+	flat  *note
 }
 
-// _count is the number of pitches that we have notes for.
-var _count int
-var notes = make(map[int]*note)
+func (p *pitch) getNote(useFlatName bool) *note {
+	if useFlatName {
+		return p.flat
+	}
+	return p.sharp
+}
 
-// notesByName provides a performance shortcut to access notes by their name.
-// Both uppercase and lowercase names work for finding the note,
-// but the canonical 'names' of the note will still be uppercase.
-var notesByName = make(map[string]*note)
+func (n *note) addInterval(r rune) *pitch {
+	id := n.pitch.id
+	next := (id + intervals[r]) % count
+	return pitches[next]
+}
 
-// init() defines our collection of notes to be the chromatic scale.
+// each interval determines how many notes to go up by
+var intervals = map[rune]int{
+	'm': 1,
+	'M': 2,
+	'A': 3,
+}
+
+// count is how many pitches have been defined
+var count int
+
+// pitches is our enumeration of pitches
+var pitches = make(map[int]*pitch)
+
+// notes is our enumeration of notes
+var notes = make(map[string]*note)
+
+// init defines our pitches and notes.
+// In this exercise, we use the chromatic scale.
 func init() {
-	newNote := func(name, flatName string) *note {
-		n := note{_count, name, flatName, nil}
-		_count++
-		notes[n.id] = &n
-		return &n
+	newPitch := func() *pitch {
+		p := &pitch{count, nil, nil}
+		pitches[count] = p
+		count++
+		return p
 	}
 
-	addByName := func(name string, n *note) {
-		notesByName[name] = n
-		notesByName[strings.ToLower(name)] = n
+	saveNote := func(n *note) {
+		notes[n.name] = n
+		notes[strings.ToLower(n.name)] = n
 	}
 
-	genNote := func(name string) {
-		n := newNote(name, name)
-		addByName(name, n)
+	newNote := func(name string) *pitch {
+		p := newPitch()
+		p.sharp = &note{name, p}
+		p.flat = p.sharp
+		saveNote(p.sharp)
+		return p
 	}
 
-	genHalfNote := func(sharp, flat string) {
-		n := newNote(sharp, flat)
-		addByName(sharp, n)
-		addByName(flat, n)
+	newHalfNote := func(sharp, flat string) *pitch {
+		p := newPitch()
+		p.sharp = &note{sharp, p}
+		p.flat = &note{flat, p}
+		saveNote(p.sharp)
+		saveNote(p.flat)
+		return p
 	}
 
-	genNote("A")
-	genHalfNote("A#", "Bb")
-	genNote("B")
-	genNote("C")
-	genHalfNote("C#", "Db")
-	genNote("D")
-	genHalfNote("D#", "Eb")
-	genNote("E")
-	genNote("F")
-	genHalfNote("F#", "Gb")
-	genNote("G")
-	genHalfNote("G#", "Ab")
-}
-
-// isTonicFlat checks if a scale with this tonic should use 'flat' names
-// for half-notes.  If this returns false, the scale will use 'sharp' names.
-func isTonicFlat(tonic string) bool {
-	switch tonic {
-	case "F", "Bb", "Eb", "Ab", "Db", "Gb", "d", "g", "c", "f", "bb", "eb":
-		return true
-	default:
-		return false
-	}
+	newNote("A")
+	newHalfNote("A#", "Bb")
+	newNote("B")
+	newNote("C")
+	newHalfNote("C#", "Db")
+	newNote("D")
+	newHalfNote("D#", "Eb")
+	newNote("E")
+	newNote("F")
+	newHalfNote("F#", "Gb")
+	newNote("G")
+	newHalfNote("G#", "Ab")
 }
