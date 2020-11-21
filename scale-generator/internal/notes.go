@@ -1,5 +1,5 @@
 // package internal hides the 'enum-like' collection of notes and only exposes the scale
-package scales
+package internal
 
 import "strings"
 

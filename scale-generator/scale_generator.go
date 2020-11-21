@@ -2,7 +2,7 @@
 package scale
 
 import (
-	"scale/scales"
+	"scale/internal"
 )
 
 // Scale creates a scale, and returns the names of the notes in it
@@ -10,6 +10,6 @@ func Scale(tonic string, interval string) []string {
 	if interval == "" {
 		interval = "mmmmmmmmmmmm"
 	}
-	scale := scales.NewScale(tonic, interval)
+	scale := internal.NewScale(tonic, interval)
 	return scale.GetNames()
 }

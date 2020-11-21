@@ -1,4 +1,4 @@
-package scales
+package internal
 
 // IScale is a sequence of notes
 type IScale interface {
