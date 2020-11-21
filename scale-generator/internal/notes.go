@@ -67,29 +67,7 @@ func init() {
 // for half-notes.  If this returns false, the scale will use 'sharp' names.
 func isTonicFlat(tonic string) bool {
 	switch tonic {
-	case "F":
-		return true
-	case "Bb":
-		return true
-	case "Eb":
-		return true
-	case "Ab":
-		return true
-	case "Db":
-		return true
-	case "Gb":
-		return true
-	case "d":
-		return true
-	case "g":
-		return true
-	case "c":
-		return true
-	case "f":
-		return true
-	case "bb":
-		return true
-	case "eb":
+	case "F", "Bb", "Eb", "Ab", "Db", "Gb", "d", "g", "c", "f", "bb", "eb":
 		return true
 
 	default:
