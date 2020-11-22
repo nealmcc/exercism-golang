@@ -3,50 +3,77 @@
 // we can change the implemntation without affecting external consumers
 package chromatic
 
-import "strings"
+import "scale/scales"
 
-var count int
-var pitches = make(map[int]*pitch)
-var notes = make(map[string]*note)
+// Rules provide the domain logic for the chromatic scale
+var Rules chromatic
+
+type chromatic struct{}
 
 func init() {
-	newPitch := func() *pitch {
-		p := &pitch{count, nil, nil}
-		pitches[count] = p
+	newPitch := func() *scales.Pitch {
+		p := scales.NewPitch(count)
 		count++
+		pitches = append(pitches, p)
 		return p
 	}
 
-	saveNote := func(n *note) {
-		notes[n.name] = n
-		notes[strings.ToLower(n.name)] = n
-	}
-
-	newNote := func(name string) {
+	addNote := func(name string) {
 		p := newPitch()
-		p.sharp = &note{name, p}
-		p.flat = p.sharp
-		saveNote(p.sharp)
+		n := scales.NewNote(name, p)
+		p.Sharp = n
+		p.Flat = n
 	}
 
-	newHalfNote := func(sharp, flat string) {
+	addHalfNote := func(sharp, flat string) {
 		p := newPitch()
-		p.sharp = &note{sharp, p}
-		p.flat = &note{flat, p}
-		saveNote(p.sharp)
-		saveNote(p.flat)
+		p.Sharp = scales.NewNote(sharp, p)
+		p.Flat = scales.NewNote(flat, p)
 	}
 
-	newNote("A")
-	newHalfNote("A#", "Bb")
-	newNote("B")
-	newNote("C")
-	newHalfNote("C#", "Db")
-	newNote("D")
-	newHalfNote("D#", "Eb")
-	newNote("E")
-	newNote("F")
-	newHalfNote("F#", "Gb")
-	newNote("G")
-	newHalfNote("G#", "Ab")
+	addNote("A")
+	addHalfNote("A#", "Bb")
+	addNote("B")
+	addNote("C")
+	addHalfNote("C#", "Db")
+	addNote("D")
+	addHalfNote("D#", "Eb")
+	addNote("E")
+	addNote("F")
+	addHalfNote("F#", "Gb")
+	addNote("G")
+	addHalfNote("G#", "Ab")
+}
+
+var (
+	pitches = []*scales.Pitch{}
+	count   = 0
+)
+
+func (_ chromatic) UseFlats(tonic string) bool {
+	switch tonic {
+	case "F", "Bb", "Eb", "Ab", "Db", "Gb", "d", "g", "c", "f", "bb", "eb":
+		return true
+	default:
+		return false
+	}
+}
+
+func (_ chromatic) AllPitches() []*scales.Pitch {
+	return pitches
+}
+
+func (_ chromatic) DefaultInterval() string {
+	return "mmmmmmmmmmmm"
+}
+
+// each interval determines how many notes to go up by
+var intervals = map[rune]int{
+	'm': 1,
+	'M': 2,
+	'A': 3,
+}
+
+func (_ chromatic) IntervalSizes() map[rune]int {
+	return intervals
 }
