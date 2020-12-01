@@ -1,4 +1,4 @@
-// package chromatic hides internal implementation of scales,
+// Package chromatic hides internal implementation of scales,
 // so that if we need to rework them due to improved understanding,
 // we can change the implemntation without affecting external consumers
 package chromatic
@@ -50,7 +50,7 @@ var (
 	count   = 0
 )
 
-func (_ chromatic) UseFlats(tonic string) bool {
+func (chromatic) UseFlats(tonic string) bool {
 	switch tonic {
 	case "F", "Bb", "Eb", "Ab", "Db", "Gb", "d", "g", "c", "f", "bb", "eb":
 		return true
@@ -59,11 +59,11 @@ func (_ chromatic) UseFlats(tonic string) bool {
 	}
 }
 
-func (_ chromatic) AllPitches() []*scales.Pitch {
+func (chromatic) AllPitches() []*scales.Pitch {
 	return pitches
 }
 
-func (_ chromatic) DefaultInterval() string {
+func (chromatic) DefaultInterval() string {
 	return "mmmmmmmmmmmm"
 }
 
@@ -74,6 +74,6 @@ var intervals = map[rune]int{
 	'A': 3,
 }
 
-func (_ chromatic) IntervalSizes() map[rune]int {
+func (chromatic) IntervalSizes() map[rune]int {
 	return intervals
 }

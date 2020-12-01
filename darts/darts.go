@@ -1,4 +1,4 @@
-// packate darts solves the Exercism side-exercise
+// Package darts solves the Exercism side-exercise
 package darts
 
 import "math"

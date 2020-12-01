@@ -1,4 +1,4 @@
-// Package holds a solution to the Exercism side-exercise of the same name
+// Package acronym holds a solution to the Exercism side-exercise of the same name
 package acronym
 
 import "strings"
@@ -16,7 +16,7 @@ func Abbreviate(s string) string {
 	return strings.ToUpper(string(acronym))
 }
 
-func IsWordPart(b byte) bool {
+func isWordPart(b byte) bool {
 	return 'a' <= b && b <= 'z' ||
 		'A' <= b && b <= 'Z' ||
 		'\'' == b
@@ -30,7 +30,7 @@ func not(m matcher) matcher {
 
 type matcher func(byte) bool
 
-func TrimUntilMatch(s []byte, isMatch matcher) []byte {
+func trimUntilMatch(s []byte, isMatch matcher) []byte {
 	i, length := 0, len(s)
 	found := false
 	for i < length && !found {

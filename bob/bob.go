@@ -35,9 +35,8 @@ func readTone(remark *string) tone {
 	if isQuestion(remark) {
 		if isYell(remark) {
 			return yellQuestion
-		} else {
-			return question
 		}
+		return question
 	}
 	if isYell(remark) {
 		return yell

@@ -17,10 +17,10 @@ type IScaleRules interface {
 	AllPitches() PitchSuperset
 }
 
-// a PitchSuperset is the set of all pitches.
+// PitchSuperset is the set of all pitches.
 type PitchSuperset = []*Pitch
 
-// An interval is a single step between notes
+// Interval is a single step between notes
 type Interval = rune
 
 // An IntervalMap determines how large each interval is
@@ -34,7 +34,7 @@ func findPitch(all *PitchSuperset, name string) (*Pitch, error) {
 			return p, nil
 		}
 	}
-	return nil, fmt.Errorf("No pitch found for %s\n", name)
+	return nil, fmt.Errorf("no pitch found for %s", name)
 }
 
 // addInterval returns the pitch that is n above this one,

@@ -1,4 +1,4 @@
-// package scale solves the Exercism side-exercise 'scale generator'
+// Package scale solves the Exercism side-exercise 'scale generator'
 package scale
 
 import (

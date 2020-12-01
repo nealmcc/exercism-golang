@@ -10,7 +10,7 @@ var foldTestCases = []struct {
 	property string
 	fn       binFunc
 	initial  int
-	list     IntList
+	list     intList
 	want     int
 }{
 	{
@@ -106,9 +106,9 @@ var filterTestCases = []struct {
 
 func TestFilterMethod(t *testing.T) {
 	for _, tt := range filterTestCases {
-		in := IntList(tt.list)
+		in := intList(tt.list)
 		got := in.Filter(tt.fn)
-		if !reflect.DeepEqual(IntList(tt.want), got) {
+		if !reflect.DeepEqual(intList(tt.want), got) {
 			t.Fatalf("FAIL: %s: %q -- expected: %v, actual: %v", tt.property, tt.name, tt.want, got)
 		} else {
 			t.Logf("PASS: %s: %s", tt.property, tt.name)
@@ -120,7 +120,7 @@ func TestFilterMethod(t *testing.T) {
 var lengthTestCases = []struct {
 	name     string
 	property string
-	list     IntList
+	list     intList
 	want     int
 }{
 	{
@@ -152,9 +152,9 @@ func TestLengthMethod(t *testing.T) {
 var mapTestCases = []struct {
 	name     string
 	property string
-	list     IntList
+	list     intList
 	fn       unaryFunc
-	want     IntList
+	want     intList
 }{
 	{
 		name:     "empty list",
@@ -187,8 +187,8 @@ func TestMapMethod(t *testing.T) {
 var reverseTestCases = []struct {
 	name     string
 	property string
-	list     IntList
-	want     IntList
+	list     intList
+	want     intList
 }{
 	{
 		name:     "empty list",
@@ -219,9 +219,9 @@ func TestReverseMethod(t *testing.T) {
 var appendTestCases = []struct {
 	name       string
 	property   string
-	list       IntList
-	appendThis IntList
-	want       IntList
+	list       intList
+	appendThis intList
+	want       intList
 }{
 	{
 		name:       "empty list",
@@ -261,22 +261,22 @@ func TestAppendMethod(t *testing.T) {
 var concatTestCases = []struct {
 	name     string
 	property string
-	list     IntList
-	args     []IntList
-	want     IntList
+	list     intList
+	args     []intList
+	want     intList
 }{
 	{
 		name:     "empty list",
 		property: "concat",
 		list:     []int{},
-		args:     []IntList{},
+		args:     []intList{},
 		want:     []int{},
 	},
 	{
 		name:     "list of lists",
 		property: "concat",
 		list:     []int{1, 2},
-		args:     []IntList{[]int{3}, []int{}, []int{4, 5, 6}},
+		args:     []intList{[]int{3}, []int{}, []int{4, 5, 6}},
 		want:     []int{1, 2, 3, 4, 5, 6},
 	},
 }

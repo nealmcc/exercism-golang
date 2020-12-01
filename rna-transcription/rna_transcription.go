@@ -11,6 +11,7 @@ var dnarna = replacer{
 
 var maxD = len(dnarna) - 2
 
+// ToRNA converts the given DNA to its RNA equivalent
 func ToRNA(dna string) string {
 	length := len(dna)
 	rna := make([]byte, length)
