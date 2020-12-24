@@ -3,28 +3,25 @@ package raindrops
 
 import (
 	"strconv"
-	"strings"
 )
 
-// Convert returns raindrop sounds based on the input number
-func Convert(n int) string {
-	d := []string{}
-
+// Convert an integer n to raindrop sounds
+func Convert(n int) (drops string) {
 	if n%3 == 0 {
-		d = append(d, "Pling")
+		drops += "Pling"
 	}
 
 	if n%5 == 0 {
-		d = append(d, "Plang")
+		drops += "Plang"
 	}
 
 	if n%7 == 0 {
-		d = append(d, "Plong")
+		drops += "Plong"
 	}
 
-	if len(d) == 0 {
+	if len(drops) == 0 {
 		return strconv.Itoa(n)
 	}
 
-	return strings.Join(d, "")
+	return drops
 }
