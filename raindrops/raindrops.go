@@ -10,15 +10,15 @@ import (
 func Convert(n int) string {
 	d := []string{}
 
-	if hasFactor(n, 3) {
+	if n%3 == 0 {
 		d = append(d, "Pling")
 	}
 
-	if hasFactor(n, 5) {
+	if n%5 == 0 {
 		d = append(d, "Plang")
 	}
 
-	if hasFactor(n, 7) {
+	if n%7 == 0 {
 		d = append(d, "Plong")
 	}
 
@@ -27,8 +27,4 @@ func Convert(n int) string {
 	}
 
 	return strings.Join(d, "")
-}
-
-func hasFactor(n, f int) bool {
-	return (n % f) == 0
 }
