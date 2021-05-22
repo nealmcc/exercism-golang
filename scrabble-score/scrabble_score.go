@@ -29,6 +29,7 @@ var scores = map[byte]int{
 	'Z': 10,
 }
 
+// Score is used to find the scrabble score for the given word
 func Score(word string) int {
 	sum := 0
 	for _, ch := range []byte(word) {
