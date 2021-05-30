@@ -46,38 +46,28 @@ func FromCodon(c codon) (aminoAcid, error) {
 	switch c {
 	case "AUG":
 		return "Methionine", nil
-	case "UUU":
+
+	case "UUU", "UUC":
 		return "Phenylalanine", nil
-	case "UUC":
-		return "Phenylalanine", nil
-	case "UUA":
+
+	case "UUA", "UUG":
 		return "Leucine", nil
-	case "UUG":
-		return "Leucine", nil
-	case "UCU":
+
+	case "UCU", "UCC", "UCA", "UCG":
 		return "Serine", nil
-	case "UCC":
-		return "Serine", nil
-	case "UCA":
-		return "Serine", nil
-	case "UCG":
-		return "Serine", nil
-	case "UAU":
+
+	case "UAU", "UAC":
 		return "Tyrosine", nil
-	case "UAC":
-		return "Tyrosine", nil
-	case "UGU":
+
+	case "UGU", "UGC":
 		return "Cysteine", nil
-	case "UGC":
-		return "Cysteine", nil
+
 	case "UGG":
 		return "Tryptophan", nil
-	case "UAA":
+
+	case "UAA", "UAG", "UGA":
 		return "", ErrStop
-	case "UAG":
-		return "", ErrStop
-	case "UGA":
-		return "", ErrStop
+
 	default:
 		return "", ErrInvalidBase
 	}
