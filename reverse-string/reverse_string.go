@@ -2,11 +2,11 @@ package reverse
 
 // Reverse returns the reverse of the given string
 func Reverse(s string) string {
-	runes := []rune(s)
-	length := len(runes)
-	rev := make([]rune, length)
-	for i, r := range runes {
-		rev[length-i-1] = r
+	r := []rune(s)
+
+	for i, j := 0, len(r)-1; i < j; i, j = i+1, j-1 {
+		r[i], r[j] = r[j], r[i]
 	}
-	return string(rev)
+
+	return string(r)
 }
