@@ -13,22 +13,18 @@ func Detect(subject string, candidates []string) []string {
 	anagrams := make([]string, 0, len(candidates))
 
 	for _, c := range candidates {
-		upperCand := strings.ToUpper(c)
-		if upperCand == upperSubj || len(c) != len(subj) {
+		if len(c) != len(subject) {
 			continue
 		}
 
-		isAnagram := true
-		cand := sortable([]byte(upperCand))
-		sort.Sort(cand)
-		for i, b := range cand {
-			if subj[i] != b {
-				isAnagram = false
-				break
-			}
+		upperCand := strings.ToUpper(c)
+		if upperCand == upperSubj {
+			continue
 		}
 
-		if isAnagram {
+		cand := sortable([]byte(upperCand))
+		sort.Sort(cand)
+		if bytesMatch(subj, cand) {
 			anagrams = append(anagrams, c)
 		}
 	}
@@ -36,6 +32,18 @@ func Detect(subject string, candidates []string) []string {
 	return anagrams
 }
 
+// bytesMatch compares the two byte arrays to see that they are identical.
+// It assumes that both inputs are already sorted, and of the same length.
+func bytesMatch(a, b []byte) bool {
+	for i, x := range a {
+		if b[i] != x {
+			return false
+		}
+	}
+	return true
+}
+
+// sortable is a byte array that implements sort.Interface
 type sortable []byte
 
 // compile time interface check
