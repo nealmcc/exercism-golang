@@ -1,12 +1,17 @@
 package isogram
 
-import "strings"
+import (
+	"unicode"
+)
 
 func IsIsogram(s string) bool {
 	found := make(map[rune]bool, len(s))
-	s = strings.ToLower(s)
 	for _, r := range s {
-		if found[r] && r != ' ' && r != '-' {
+		if !unicode.IsLetter(r) {
+			continue
+		}
+		r = unicode.ToLower(r)
+		if found[r] {
 			return false
 		}
 		found[r] = true
