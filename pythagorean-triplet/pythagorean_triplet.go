@@ -1,25 +1,32 @@
 package pythagorean
 
-import "math"
+import (
+  "math"
+  "sort"
+  "strconv"
+)
 
-// a Triplet (or Pythagorean Triplet) is a set of three integers, a, b, c such
-// that a < b < c and a^2 + b^2 = c^2
+// a Triplet (or Pythagorean Triplet) is a set of three integers,
+// a, b, c such that a < b < c and a^2 + b^2 = c^2
 type Triplet [3]int
 
 // Range finds all of the pythagorean triplets such that a >= min and c <= max
-// (This one is pretty inefficient - I haven't looked for a better way yet)
 func Range(min, max int) []Triplet {
-  var trips []Triplet
-  minP, maxP := 3*min+2, 3*max-2
-  for p := minP; p <= maxP; p++ {
-    possibles := Sum(p)
-    for _, t := range possibles {
-      if t[0] >= min && t[2] <= max {
-        trips = append(trips, t)
+  var t []Triplet
+
+  for c := max; c >= min+2; c-- {
+    c2 := c * c
+    for a, a2 := min, min*min; a2 < c2/2; a, a2 = a+1, (a+1)*(a+1) {
+      b2 := c2 - a2
+      b := int(math.Sqrt(float64(b2)))
+      if b*b == b2 {
+        t = append(t, Triplet{a, b, c})
       }
     }
   }
-  return trips
+
+  sort.Sort(tripletSlice(t))
+  return t
 }
 
 // Sum finds all of the pythagorean triplets such that a + b + c = p
@@ -28,30 +35,56 @@ func Sum(p int) []Triplet {
   min, max := (p/3)+1, (p/2)-1
 
   for c := max; c >= min; c-- {
-    if t, ok := getTriplet(p, c); ok {
-      trips = append(trips, t)
+    b24ac := c*c + 2*p*c - p*p
+    if b24ac <= 0 {
+      continue
     }
+
+    sqrt := int(math.Sqrt(float64(b24ac)))
+    if sqrt*sqrt != b24ac {
+      continue
+    }
+
+    a := (p - c - sqrt) / 2
+    b := (p - c + sqrt) / 2
+    trips = append(trips, Triplet{a, b, c})
   }
 
+  sort.Sort(tripletSlice(trips))
   return trips
 }
 
-func getTriplet(p, c int) (Triplet, bool) {
-  b24ac := c*c + 2*p*c - p*p
-  if b24ac <= 0 {
-    return Triplet{}, false
+type tripletSlice []Triplet
+
+var _ sort.Interface = tripletSlice{}
+
+// Len is part of sort.Interface
+func (s tripletSlice) Len() int {
+  return len(s)
+}
+
+// Less is part of sort.Interface
+// This method compares Triplets lexicographically
+func (s tripletSlice) Less(i, j int) bool {
+  for n := 0; n < 2; n++ {
+    a := strconv.Itoa(s[i][n])
+    b := strconv.Itoa(s[j][n])
+    if a < b {
+      return true
+    }
+    if b < a {
+      return false
+    }
   }
 
-  sqrt := int(math.Sqrt(float64(b24ac)))
+  a := strconv.Itoa(s[i][2])
+  b := strconv.Itoa(s[j][2])
+  return a < b
+}
 
-  if sqrt*sqrt != b24ac {
-    return Triplet{}, false
-  }
-
-  a := (p - c - sqrt) / 2
-  b := (p - c + sqrt) / 2
-
-  return Triplet{a, b, c}, true
+// Swap is part of sort.Interface
+func (s tripletSlice) Swap(i, j int) {
+  s[i], s[j] = s[j], s[i]
 }
 
 /*
@@ -148,4 +181,5 @@ b = (p -c +1)/2 = 4
 We have our triplet:
 [3,4,5]
 
+note: for the 'Range' method, I'm just using brute force.
 */
