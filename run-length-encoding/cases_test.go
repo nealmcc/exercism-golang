@@ -1,5 +1,7 @@
 package encode
 
+import "strings"
+
 // Source: exercism/problem-specifications
 // Commit: 1b7900e run-length-encoding: apply "input" policy
 // Problem Specifications Version: 1.1.0
@@ -10,6 +12,12 @@ var encodeTests = []struct {
 	expected    string
 	description string
 }{
+	{
+		strings.Repeat("A", 48*1024) + " " + strings.Repeat("B", 36*1024),
+		"49152A 36864B",
+		"A very long string",
+	},
+	{"AAAA", "4A", "All the same character"},
 	{"", "", "empty string"},
 	{"XYZ", "XYZ", "single characters only are encoded without count"},
 	{"AABBBCCCC", "2A3B4C", "string with no single characters"},
