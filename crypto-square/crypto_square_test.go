@@ -6,6 +6,7 @@ var tests = []struct {
 	pt string // plain text
 	ct string // cipher text
 }{
+	{"日本語a b c", "日a 本b 語c"},
 	{
 		"s#$%^&plunk",
 		"su pn lk",
