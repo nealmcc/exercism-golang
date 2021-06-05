@@ -17,6 +17,11 @@ var encodeTests = []struct {
 		"49152A 36864B",
 		"A very long string",
 	},
+	{
+		strings.Repeat("A", 4*1024),
+		"4096A",
+		"A string that exactly fills one buffer within a string reader",
+	},
 	{"AAAA", "4A", "All the same character"},
 	{"", "", "empty string"},
 	{"XYZ", "XYZ", "single characters only are encoded without count"},
@@ -47,4 +52,5 @@ var encodeDecodeTests = []struct {
 	description string
 }{
 	{"zzz ZZ  zZ", "zzz ZZ  zZ", "encode followed by decode gives original string"},
+	{"WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB", "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB", "benchmark"},
 }

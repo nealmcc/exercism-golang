@@ -20,6 +20,7 @@ func TestRunLengthDecode(t *testing.T) {
 		t.Logf("PASS RunLengthDecode - %s", test.description)
 	}
 }
+
 func TestRunLengthEncodeDecode(t *testing.T) {
 	for _, test := range encodeDecodeTests {
 		if actual := RunLengthDecode(RunLengthEncode(test.input)); actual != test.expected {
@@ -27,5 +28,13 @@ func TestRunLengthEncodeDecode(t *testing.T) {
 				test.description, test.input, actual, test.expected)
 		}
 		t.Logf("PASS %s", test.description)
+	}
+}
+
+func BenchmarkEncodeDecode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for _, test := range encodeDecodeTests {
+			RunLengthDecode(RunLengthEncode(test.input))
+		}
 	}
 }
