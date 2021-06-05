@@ -11,7 +11,7 @@ func Valid(s string) bool {
 			continue
 		}
 		d -= '0'
-		// bytes are unsigned, so we can use this to rule out invalid digits:
+		// bytes are unsigned, so no need to check negative:
 		if d > 9 {
 			return false
 		}
