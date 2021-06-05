@@ -1,28 +1,36 @@
 package luhn
 
+import (
+	"strings"
+)
+
 // Valid determines if the given string is a valid account number
 // according to the Luhn algorithm:
 // https://en.wikipedia.org/wiki/Luhn_algorithm
 func Valid(s string) bool {
-	var sum, numDigits int
-	for i := len(s) - 1; i >= 0; i-- {
-		var d byte = s[i]
-		if d == ' ' {
-			continue
-		}
+	digits := strings.ReplaceAll(s, " ", "")
+	if len(digits) <= 1 {
+		return false
+	}
+
+	var (
+		sum    int
+		parity int = len(digits) % 2
+	)
+
+	for i, d := range []byte(digits) {
 		d -= '0'
-		// bytes are unsigned, so no need to check negative:
 		if d > 9 {
 			return false
 		}
-		if numDigits%2 == 1 {
-			d = d << 1
+		if i%2 == parity {
+			d += d
 			if d > 9 {
 				d -= 9
 			}
 		}
 		sum += int(d)
-		numDigits++
 	}
-	return numDigits > 1 && sum%10 == 0
+
+	return sum%10 == 0
 }
