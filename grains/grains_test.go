@@ -33,10 +33,20 @@ func TestTotal(t *testing.T) {
 	}
 }
 
+func TestSum(t *testing.T) {
+	var want uint64
+	for n := 1; n <= 64; n++ {
+		count, _ := Square(n)
+		want += count
+		got, _ := Sum(n)
+		if got != want {
+			t.Errorf("Sum(%d) = %d ; want %d", n, got, want)
+		}
+	}
+}
+
 func BenchmarkSquare(b *testing.B) {
-
 	for i := 0; i < b.N; i++ {
-
 		for _, test := range squareTests {
 			Square(test.input)
 		}
