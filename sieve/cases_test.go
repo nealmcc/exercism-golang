@@ -25,6 +25,11 @@ var testCases = []struct {
 		[]int{2, 3, 5, 7},
 	},
 	{
+		"find primes up to 6",
+		6,
+		[]int{2, 3, 5},
+	},
+	{
 		"limit is prime",
 		13,
 		[]int{2, 3, 5, 7, 11, 13},

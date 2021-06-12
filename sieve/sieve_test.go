@@ -20,8 +20,9 @@ func TestSieve(t *testing.T) {
 
 func BenchmarkSieve(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		for _, tc := range testCases {
-			Sieve(tc.limit)
-		}
+		Sieve(10e6)
+		// for _, tc := range testCases {
+		// 	Sieve(tc.limit)
+		// }
 	}
 }
