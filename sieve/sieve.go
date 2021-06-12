@@ -1,7 +1,7 @@
 package sieve
 
 // Sieve finds prime numbers up to and including the limit,
-// using the sieve of Eristosthenes
+// using the sieve of Eratosthenes
 func Sieve(limit int) []int {
 	primes := make([]int, 0, 12)
 
