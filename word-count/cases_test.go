@@ -69,4 +69,14 @@ var testCases = []struct {
 		",\n,one,\n ,two \n 'three'",
 		Frequency{"one": 1, "three": 1, "two": 1},
 	},
+	{
+		"simple words are either all letters or all digits",
+		"a12,12ab,bc1",
+		Frequency{"1": 1, "12": 2, "a": 1, "ab": 1, "bc": 1},
+	},
+	{
+		"digits and letters can by joined by an apostrophe",
+		"pass'123,123'pass",
+		Frequency{"123'pass": 1, "pass'123": 1},
+	},
 }
