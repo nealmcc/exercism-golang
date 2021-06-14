@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// a Clock holds the current wall time, with no day or timezone information.
-// a Clock has minute precision.
+// Clock holds the current wall time, with no day or timezone information,
+// and has minute precision.
 type Clock interface {
 	// String returns the current time in 24-hour format, with leading 0s
 	String() string
@@ -32,7 +32,8 @@ const (
 	day    = 24 * hour
 )
 
-// Create a new clock. Negative values are allowed.
+// New creates a new clock set to the given time.  Large or negative values
+// for the hours and minutes are allowed.
 func New(h, m int) Clock {
 	t := (hour*h + minute*m) % day
 	if t < 0 {
