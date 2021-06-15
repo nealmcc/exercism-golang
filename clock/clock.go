@@ -2,7 +2,6 @@ package clock
 
 import (
 	"fmt"
-	"time"
 )
 
 // Clock holds the current wall time, with no day or timezone information,
@@ -10,21 +9,16 @@ import (
 type Clock interface {
 	// String returns the current time in 24-hour format, with leading 0s
 	String() string
-	// Add the given number of minutes to this clock,
-	// and return a copy of this clock.
+	// Add the given number of minutes to this clock, and return a copy
 	Add(mins int) Clock
-	// Subtract the given number of minutes from this clock,
-	// and return a copy of this clock.
+	// Subtract the given number of minutes from this clock, and return a copy
 	Subtract(mins int) Clock
-	// Return the time.Time equivalent of this clock (location is set to UTC)
-	Time() time.Time
 }
 
 // we will store the clock as the number of minutes past midnight
-type clock int
-
-// compile-time interface check
-var _ Clock = clock(0)
+type clock struct {
+	mins int
+}
 
 const (
 	minute = 1
@@ -32,44 +26,38 @@ const (
 	day    = 24 * hour
 )
 
+// compile-time interface check
+var _ Clock = clock{}
+
 // New creates a new clock set to the given time.  Large or negative values
 // for the hours and minutes are allowed.
 func New(h, m int) Clock {
-	t := (hour*h + minute*m) % day
-	if t < 0 {
-		t += day
-	}
-	return clock(t)
+	c := clock{hour*h + minute*m}
+	return c.normal()
 }
 
 func (c clock) String() string {
-	return fmt.Sprintf("%02d:%02d", c.Hours(), c.Minutes())
-}
-
-func (c clock) Hours() int {
-	return int(c) / hour
-}
-
-func (c clock) Minutes() int {
-	return int(c) % hour
+	hh := c.mins / hour
+	mm := c.mins % hour
+	return fmt.Sprintf("%02d:%02d", hh, mm)
 }
 
 func (c clock) Add(mins int) Clock {
-	t := int(c) + mins
-	t = t % day
-	if t < 0 {
-		t += day
-	}
-	c = clock(t)
-	return c
+	c.mins += mins
+	return c.normal()
 }
 
 func (c clock) Subtract(mins int) Clock {
-	return c.Add(-1 * mins)
+	c.mins -= mins
+	return c.normal()
 }
 
-func (c clock) Time() time.Time {
-	return time.Date(0 /* year */, 0 /* month */, 0, /* day */
-		c.Hours(), c.Minutes(), 0 /* seconds */, 0, /* nanoseconds */
-		time.UTC)
+// normal adjusts the value of the clock to be in the range
+// 0 <= c.mins < day
+func (c clock) normal() clock {
+	c.mins = c.mins % day
+	if c.mins < 0 {
+		c.mins += day
+	}
+	return c
 }
