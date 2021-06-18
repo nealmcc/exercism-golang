@@ -9,8 +9,8 @@ import (
 // from the beginning of the word to the end, before appending 'ay'
 // Longer prefixes will override shorter ones.
 type Rule struct {
-	prefix string
-	n      int
+	Prefix string
+	N      int
 }
 
 // a Trie is a tree structure which allows us to store and evaluate rules
@@ -41,8 +41,17 @@ func New() Trie {
 	}
 }
 
+// WithRules initializes a new Trie and inserts the given Rules
+func WithRules(rules ...Rule) Trie {
+	t := New()
+	for _, r := range rules {
+		t.Insert(r)
+	}
+	return t
+}
+
 func (t *trie) Insert(r Rule) {
-	t.insert([]rune(r.prefix), r.n)
+	t.insert([]rune(r.Prefix), r.N)
 }
 
 func (t *trie) insert(prefix []rune, move int) {
