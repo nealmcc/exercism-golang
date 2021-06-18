@@ -3,7 +3,7 @@ package piglatin
 import (
 	"bufio"
 	"log"
-	"piglatin/internal/trie"
+	"piglatin/pkg/trie"
 	"strings"
 )
 
