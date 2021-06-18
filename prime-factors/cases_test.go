@@ -1,5 +1,7 @@
 package prime
 
+import "math"
+
 // Source: exercism/problem-specifications
 // Commit: d928874 prime-factors: apply "input" policy
 // Problem Specifications Version: 1.1.0
@@ -44,5 +46,10 @@ var tests = []struct {
 		"factors include a large prime",
 		93819012551,
 		[]int64{11, 9539, 894119},
+	},
+	{
+		"largest int64 - checking for memory / overflow issues",
+		math.MaxInt64,
+		[]int64{7, 7, 73, 127, 337, 92737, 649657},
 	},
 }
