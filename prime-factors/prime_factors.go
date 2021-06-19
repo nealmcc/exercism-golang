@@ -14,19 +14,19 @@ func Factors(n int64) []int64 {
 	}
 
 	quo, factors := findFactors(n, primeCache)
+	maxp := primeCache[len(primeCache)-1]
 
-	for quo != 1 {
-		curr := len(primeCache) - 1
-		maxp := primeCache[curr]
-		limit := maxp * maxp
-		if quo/maxp < maxp {
-			limit = quo
-		}
-		morePrimes := nextPrimes(primeCache, limit)
+	for quo != 1 && quo/maxp > maxp {
+		morePrimes := nextPrimes(primeCache, maxp*maxp)
 		q2, moreFactors := findFactors(quo, morePrimes)
 		quo = q2
 		primeCache = append(primeCache, morePrimes...)
 		factors = append(factors, moreFactors...)
+		maxp = primeCache[len(primeCache)-1]
+	}
+
+	if quo != 1 {
+		factors = append(factors, quo)
 	}
 
 	return factors
