@@ -5,7 +5,7 @@ import (
 )
 
 // cache the prime numbers as we find them:
-var primeCache = []int64{2, 3, 5}
+var primeCache = []int64{2, 3, 5, 7, 11, 13, 17, 19}
 
 // Factors determines the prime factors of the given natural number
 func Factors(n int64) []int64 {
