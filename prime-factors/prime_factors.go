@@ -76,7 +76,7 @@ func nextPrimes(primes []int64, limit int64) []int64 {
 	// skip the first prime (2)
 	for i := 1; i < len(primes); i++ {
 		p := primes[i]
-		for k := p; k <= limit; k += p {
+		for k := p * p; k <= limit; k += p {
 			delete(newPrimes, k)
 		}
 	}
