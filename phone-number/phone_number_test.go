@@ -7,6 +7,8 @@ import (
 func TestNumber(t *testing.T) {
 	for _, test := range numberTests {
 		actual, actualErr := Number(test.input)
+		tel, _ := tryParse(test.input)
+		t.Logf("%#v\n", tel)
 		if !test.expectErr {
 			if actualErr != nil {
 				// if we don't expect an error and there is one
@@ -18,7 +20,7 @@ func TestNumber(t *testing.T) {
 			}
 		} else if actualErr == nil {
 			// if we expect an error and there isn't one
-			t.Errorf("FAIL: %s\nNumber(%q): expected an error, but error is nil", test.description, test.input)
+			t.Errorf("FAIL: %s\nNumber(%q): expected an error, but error is nil\n", test.description, test.input)
 		}
 	}
 }
@@ -34,6 +36,8 @@ func BenchmarkNumber(b *testing.B) {
 func TestAreaCode(t *testing.T) {
 	for _, test := range numberTests {
 		actual, actualErr := AreaCode(test.input)
+		tel, _ := tryParse(test.input)
+		t.Logf("%#v\n", tel)
 		if !test.expectErr {
 			if actual != test.areaCode {
 				t.Errorf("FAIL: %s\nAreaCode(%q): expected [%s], actual: [%s]", test.description, test.input, test.areaCode, actual)
@@ -61,6 +65,8 @@ func BenchmarkAreaCode(b *testing.B) {
 func TestFormat(t *testing.T) {
 	for _, test := range numberTests {
 		actual, actualErr := Format(test.input)
+		tel, _ := tryParse(test.input)
+		t.Logf("%#v\n", tel)
 		if !test.expectErr {
 			if actualErr != nil {
 				// if we don't expect an error and there is one
