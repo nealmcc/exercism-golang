@@ -1,3 +1,3 @@
-module prime
+module primefactors
 
 go 1.13
