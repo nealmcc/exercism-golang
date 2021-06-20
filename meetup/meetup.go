@@ -2,39 +2,27 @@ package meetup
 
 import "time"
 
-type WeekSchedule uint
+type WeekSchedule int
 
 const (
-	First WeekSchedule = iota + 1
-	Second
-	Third
-	Fourth
-	Teenth
-	Last
+	First  WeekSchedule = 1
+	Second WeekSchedule = 8
+	Third  WeekSchedule = 15
+	Fourth WeekSchedule = 22
+	Teenth WeekSchedule = 13
+	Last   WeekSchedule = -6
 )
 
 // Day finds the date for the nth weekday of the given month and year
 func Day(nth WeekSchedule, weekday time.Weekday, month time.Month, year int) int {
-	var day int
-	switch nth {
-	case First, Last:
-		day = 1
-	case Second:
-		day = 8
-	case Third:
-		day = 15
-	case Fourth:
-		day = 22
-	case Teenth:
-		day = 13
-	}
-	minDate := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	if nth == Last {
-		minDate = minDate.AddDate(0, 1, -7)
+		month++
 	}
+	minDate := time.Date(year, month, int(nth), 0, 0, 0, 0, time.UTC)
 	return after(weekday, minDate).Day()
 }
 
+// after finds the first occurrence of the given weekday on or after the date
 func after(weekday time.Weekday, minDate time.Time) time.Time {
 	delta := weekday - minDate.Weekday()
 	if delta < 0 {
