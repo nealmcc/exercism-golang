@@ -2,23 +2,26 @@ package meetup
 
 import "time"
 
-type WeekSchedule int
+// WeekSchedule stores an offset from the beginning of a month
+type WeekSchedule struct {
+	month time.Month
+	day   int
+}
 
-const (
-	First  WeekSchedule = 1
-	Second WeekSchedule = 8
-	Third  WeekSchedule = 15
-	Fourth WeekSchedule = 22
-	Teenth WeekSchedule = 13
-	Last   WeekSchedule = -6
+var (
+	First  = WeekSchedule{0, 1}
+	Second = WeekSchedule{0, 8}
+	Third  = WeekSchedule{0, 15}
+	Fourth = WeekSchedule{0, 22}
+	Teenth = WeekSchedule{0, 13}
+	Last   = WeekSchedule{1, -6}
 )
 
 // Day finds the date for the nth weekday of the given month and year
 func Day(nth WeekSchedule, weekday time.Weekday, month time.Month, year int) int {
-	if nth == Last {
-		month++
-	}
-	minDate := time.Date(year, month, int(nth), 0, 0, 0, 0, time.UTC)
+	month = month + nth.month
+	day := nth.day
+	minDate := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	return after(weekday, minDate).Day()
 }
 
