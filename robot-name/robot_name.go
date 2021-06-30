@@ -6,14 +6,17 @@ import (
 	"sync"
 )
 
+// Robot has a name
 type Robot struct {
 	name string
 }
 
+// Reset the robot's name
 func (r *Robot) Reset() {
 	r.name = ""
 }
 
+// Name gets the robots's name
 func (r *Robot) Name() (string, error) {
 	if len(r.name) > 0 {
 		return r.name, nil
