@@ -20,34 +20,34 @@ func Products(fmin, fmax int) (pmin, pmax Product, err error) {
 		return
 	}
 
-	min, max := fmax*fmax+1, 0
-	factors := make(map[int][][2]int, 8)
+	min, max := fmax*fmax+1, -1
 	for a := fmin; a <= fmax; a++ {
 		for b := a; b <= fmax; b++ {
 			p := a * b
-			if min < p && p < max {
+			if min < p && p < max || !isPalindrome(p) {
 				continue
 			}
-			if !isPalindrome(p) {
-				continue
-			}
-			factors[p] = append(factors[p], [2]int{a, b})
 			if p < min {
 				min = p
+				pmin = Product{min, nil}
+			}
+			if p == min {
+				pmin.Factorizations = append(pmin.Factorizations, [2]int{a, b})
 			}
 			if p > max {
 				max = p
+				pmax = Product{max, nil}
+			}
+			if p == max {
+				pmax.Factorizations = append(pmax.Factorizations, [2]int{a, b})
 			}
 		}
 	}
 
-	if len(factors) == 0 {
+	if min > max {
 		err = errors.New("no palindromes")
-		return
 	}
 
-	pmin = Product{min, factors[min]}
-	pmax = Product{max, factors[max]}
 	return
 }
 
