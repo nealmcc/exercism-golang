@@ -20,7 +20,17 @@ func Products(fmin, fmax int) (pmin, pmax Product, err error) {
 		return
 	}
 
-	min, max := fmax*fmax+1, 0
+	var (
+		min, max int
+	)
+
+	if fmax < 0 {
+		min = fmin*fmin + 1
+	} else {
+		min = fmax*fmax + 1
+	}
+	max = -1
+
 	factors := make(map[int][][2]int, 8)
 	for a := fmin; a <= fmax; a++ {
 		for b := a; b <= fmax; b++ {

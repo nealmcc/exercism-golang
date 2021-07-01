@@ -41,7 +41,7 @@ var testData = []struct {
 }
 
 // Bonus curiosities. Can a negative number be a palindrome? Most say no.
-/*
+
 var bonusData = []struct {
 	fmin, fmax int
 	pmin, pmax Product
@@ -62,22 +62,21 @@ var bonusData = []struct {
 
 	//In case you reverse the *digits* you could have the following cases:
 	//- the zero has to be considered
-	//{-2, 2,
-	//	Product{0, [][2]int{{-2, 0}, {-1, 0}, {0, 0}, {0, 1}, {0, 2}}},
-	//	Product{4, [][2]int{{-2, -2}, {2, 2}}},
-	//	""},
-
-	// - you can keep the minus sign in place
 	{-2, 2,
-		Product{-4, [][2]int{{-2, 2}}},
+		Product{0, [][2]int{{-2, 0}, {-1, 0}, {0, 0}, {0, 1}, {0, 2}}},
 		Product{4, [][2]int{{-2, -2}, {2, 2}}},
 		""},
+
+	// - you can keep the minus sign in place
+	// {-2, 2,
+	// 	Product{-4, [][2]int{{-2, 2}}},
+	// 	Product{4, [][2]int{{-2, -2}, {2, 2}}},
+	// 	""},
 }
-*/
 
 func TestPalindromeProducts(t *testing.T) {
 	// Uncomment the following line and the bonusData var above to add the bonus test to the default tests
-	// testData = append(testData, bonusData...)
+	testData = append(testData, bonusData...)
 	for _, test := range testData {
 		// common preamble for test failures
 		ret := fmt.Sprintf("Products(%d, %d) returned",
