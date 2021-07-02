@@ -52,6 +52,45 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	}
 
 	// Parallelism, always a great idea
+	co := processEntries(locale, currency, entriesCopy)
+
+	ss := make([]string, len(entriesCopy))
+	for range entriesCopy {
+		v := <-co
+		if v.e != nil {
+			return "", v.e
+		}
+		ss[v.i] = v.s
+	}
+	for i := 0; i < len(entriesCopy); i++ {
+		header += ss[i]
+	}
+	return header, nil
+}
+
+func buildHeader(locale string) (string, error) {
+	var header string
+	if locale == "nl-NL" {
+		header = "Datum" +
+			strings.Repeat(" ", 10-len("Datum")) +
+			" | " +
+			"Omschrijving" +
+			strings.Repeat(" ", 25-len("Omschrijving")) +
+			" | " + "Verandering" + "\n"
+	} else if locale == "en-US" {
+		header = "Date" +
+			strings.Repeat(" ", 10-len("Date")) +
+			" | " +
+			"Description" +
+			strings.Repeat(" ", 25-len("Description")) +
+			" | " + "Change" + "\n"
+	} else {
+		return "", errors.New("invalid locale requested")
+	}
+	return header, nil
+}
+
+func processEntries(locale, currency string, entriesCopy []Entry) <-chan row {
 	co := make(chan row)
 	for i, et := range entriesCopy {
 		go func(i int, entry Entry) {
@@ -179,38 +218,5 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 				strings.Repeat(" ", 13-al) + a + "\n"}
 		}(i, et)
 	}
-	ss := make([]string, len(entriesCopy))
-	for range entriesCopy {
-		v := <-co
-		if v.e != nil {
-			return "", v.e
-		}
-		ss[v.i] = v.s
-	}
-	for i := 0; i < len(entriesCopy); i++ {
-		header += ss[i]
-	}
-	return header, nil
-}
-
-func buildHeader(locale string) (string, error) {
-	var header string
-	if locale == "nl-NL" {
-		header = "Datum" +
-			strings.Repeat(" ", 10-len("Datum")) +
-			" | " +
-			"Omschrijving" +
-			strings.Repeat(" ", 25-len("Omschrijving")) +
-			" | " + "Verandering" + "\n"
-	} else if locale == "en-US" {
-		header = "Date" +
-			strings.Repeat(" ", 10-len("Date")) +
-			" | " +
-			"Description" +
-			strings.Repeat(" ", 25-len("Description")) +
-			" | " + "Change" + "\n"
-	} else {
-		return "", errors.New("invalid locale requested")
-	}
-	return header, nil
+	return co
 }
