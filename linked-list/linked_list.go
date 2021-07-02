@@ -11,7 +11,8 @@ import (
 // The zero value is empty and ready to use.
 type List struct {
 	head, tail *Node
-	len        int
+	// Len is the number of elements in the list
+	Len int
 }
 
 // Node is an element within a doubly-linked list
@@ -54,38 +55,38 @@ func (l *List) Last() *Node {
 // PushFront pushes the given element on to the the head of the list
 func (l *List) PushFront(v interface{}) {
 	n := &Node{Val: v}
-	if l.len == 0 {
-		l.len, l.head, l.tail = 1, n, n
+	if l.Len == 0 {
+		l.Len, l.head, l.tail = 1, n, n
 		return
 	}
 	n.next = l.head
 	l.head.prev = n
 	l.head = n
-	l.len++
+	l.Len++
 }
 
 // PushBack appends the given element at the tail of the list
 func (l *List) PushBack(v interface{}) {
 	n := &Node{Val: v}
-	if l.len == 0 {
-		l.len, l.head, l.tail = 1, n, n
+	if l.Len == 0 {
+		l.Len, l.head, l.tail = 1, n, n
 		return
 	}
 	n.prev = l.tail
 	l.tail.next = n
 	l.tail = n
-	l.len++
+	l.Len++
 }
 
 // PopFront removes the element from the head of the list and returns it
 func (l *List) PopFront() (interface{}, error) {
-	if l.len == 0 {
+	if l.Len == 0 {
 		return nil, ErrEmptyList
 	}
 	v := l.head.Val
 	l.head = l.head.next
-	l.len--
-	if l.len == 0 {
+	l.Len--
+	if l.Len == 0 {
 		l.tail = nil
 	} else {
 		l.head.prev = nil
@@ -95,13 +96,13 @@ func (l *List) PopFront() (interface{}, error) {
 
 // PopBack removes the element from the tail of the list and returns it
 func (l *List) PopBack() (interface{}, error) {
-	if l.len == 0 {
+	if l.Len == 0 {
 		return nil, ErrEmptyList
 	}
 	v := l.tail.Val
 	l.tail = l.tail.prev
-	l.len--
-	if l.len == 0 {
+	l.Len--
+	if l.Len == 0 {
 		l.head = nil
 	} else {
 		l.tail.next = nil
@@ -124,7 +125,7 @@ func (l *List) Reverse() *List {
 func (l *List) String() string {
 	var b strings.Builder
 	b.WriteByte('[')
-	b.WriteString(strconv.Itoa(l.len))
+	b.WriteString(strconv.Itoa(l.Len))
 	b.Write([]byte{']', ' ', '{'})
 	for curr := l.head; curr != nil; curr = curr.next {
 		fmt.Fprint(&b, curr.Val)
