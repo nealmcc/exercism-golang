@@ -46,24 +46,11 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		es = es[1:]
 	}
 
-	var s string
-	if locale == "nl-NL" {
-		s = "Datum" +
-			strings.Repeat(" ", 10-len("Datum")) +
-			" | " +
-			"Omschrijving" +
-			strings.Repeat(" ", 25-len("Omschrijving")) +
-			" | " + "Verandering" + "\n"
-	} else if locale == "en-US" {
-		s = "Date" +
-			strings.Repeat(" ", 10-len("Date")) +
-			" | " +
-			"Description" +
-			strings.Repeat(" ", 25-len("Description")) +
-			" | " + "Change" + "\n"
-	} else {
-		return "", errors.New("invalid locale requested")
+	header, err := buildHeader(locale)
+	if err != nil {
+		return "", err
 	}
+
 	// Parallelism, always a great idea
 	co := make(chan row)
 	for i, et := range entriesCopy {
@@ -201,7 +188,29 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		ss[v.i] = v.s
 	}
 	for i := 0; i < len(entriesCopy); i++ {
-		s += ss[i]
+		header += ss[i]
 	}
-	return s, nil
+	return header, nil
+}
+
+func buildHeader(locale string) (string, error) {
+	var header string
+	if locale == "nl-NL" {
+		header = "Datum" +
+			strings.Repeat(" ", 10-len("Datum")) +
+			" | " +
+			"Omschrijving" +
+			strings.Repeat(" ", 25-len("Omschrijving")) +
+			" | " + "Verandering" + "\n"
+	} else if locale == "en-US" {
+		header = "Date" +
+			strings.Repeat(" ", 10-len("Date")) +
+			" | " +
+			"Description" +
+			strings.Repeat(" ", 25-len("Description")) +
+			" | " + "Change" + "\n"
+	} else {
+		return "", errors.New("invalid locale requested")
+	}
+	return header, nil
 }
