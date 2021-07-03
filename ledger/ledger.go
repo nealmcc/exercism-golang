@@ -23,6 +23,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	entriesCopy = append(entriesCopy, entries...)
 	if len(entries) == 0 {
 		if _, err := FormatLedger(currency, "en-US", []Entry{{Date: "2014-01-01", Description: "", Change: 0}}); err != nil {
+			// invalid currency requested
 			return "", err
 		}
 	}
@@ -51,21 +52,16 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		return "", err
 	}
 
-	// Parallelism, always a great idea
-	co := processEntries(locale, currency, entriesCopy)
+	rows, err := processEntries(locale, currency, entriesCopy)
+	if err != nil {
+		return "", err
+	}
 
-	ss := make([]string, len(entriesCopy))
-	for range entriesCopy {
-		v := <-co
-		if v.e != nil {
-			return "", v.e
-		}
-		ss[v.i] = v.s
+	var body strings.Builder
+	for _, r := range rows {
+		body.WriteString(r.s)
 	}
-	for i := 0; i < len(entriesCopy); i++ {
-		header += ss[i]
-	}
-	return header, nil
+	return header + body.String(), nil
 }
 
 func buildHeader(locale string) (string, error) {
@@ -90,133 +86,130 @@ func buildHeader(locale string) (string, error) {
 	return header, nil
 }
 
-func processEntries(locale, currency string, entriesCopy []Entry) <-chan row {
-	co := make(chan row)
-	for i, et := range entriesCopy {
-		go func(i int, entry Entry) {
-			if len(entry.Date) != 10 {
-				co <- row{e: errors.New("date format invalid")}
-			}
-			yyyy, d2, mm, d4, dd := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
-			if d2 != '-' {
-				co <- row{e: errors.New("year-month separator invalid")}
-			}
-			if d4 != '-' {
-				co <- row{e: errors.New("moth-day separator invalid")}
-			}
-			// set description to a fixed length
-			de := entry.Description
-			if len(de) > 25 {
-				de = de[:22] + "..."
+func processEntries(locale, currency string, entriesCopy []Entry) ([]row, error) {
+	rows := make([]row, len(entriesCopy))
+	for i, entry := range entriesCopy {
+		if len(entry.Date) != 10 {
+			return nil, errors.New("date format invalid")
+		}
+		yyyy, d2, mm, d4, dd := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
+		if d2 != '-' {
+			return nil, errors.New("year-month separator invalid")
+		}
+		if d4 != '-' {
+			return nil, errors.New("month-day separator invalid")
+		}
+
+		// set description to a fixed length
+		desc := entry.Description
+		if len(desc) > 25 {
+			desc = desc[:22] + "..."
+		} else {
+			desc = desc + strings.Repeat(" ", 25-len(desc))
+		}
+
+		// convert the date format to either en-US or nl-NL
+		var date string
+		if locale == "nl-NL" {
+			date = dd + "-" + mm + "-" + yyyy
+		} else if locale == "en-US" {
+			date = mm + "/" + dd + "/" + yyyy
+		}
+
+		// format the cents according to locale and postive / negative:
+		negative := false
+		cents := entry.Change
+		if cents < 0 {
+			cents = cents * -1
+			negative = true
+		}
+		var a string
+		if locale == "nl-NL" {
+			if currency == "EUR" {
+				a += "€"
+			} else if currency == "USD" {
+				a += "$"
 			} else {
-				de = de + strings.Repeat(" ", 25-len(de))
+				return nil, errors.New("invalid currency requested")
 			}
-			// convert the date format to either en-US or nl-NL
-			var date string
-			if locale == "nl-NL" {
-				date = dd + "-" + mm + "-" + yyyy
-			} else if locale == "en-US" {
-				date = mm + "/" + dd + "/" + yyyy
+			a += " "
+			centsStr := strconv.Itoa(cents)
+			switch len(centsStr) {
+			case 1:
+				centsStr = "00" + centsStr
+			case 2:
+				centsStr = "0" + centsStr
 			}
-			negative := false
-			cents := entry.Change
-			if cents < 0 {
-				cents = cents * -1
-				negative = true
+			rest := centsStr[:len(centsStr)-2]
+			var parts []string
+			for len(rest) > 3 {
+				parts = append(parts, rest[len(rest)-3:])
+				rest = rest[:len(rest)-3]
 			}
-			var a string
-			if locale == "nl-NL" {
-				if currency == "EUR" {
-					a += "€"
-				} else if currency == "USD" {
-					a += "$"
-				} else {
-					co <- struct {
-						i int
-						s string
-						e error
-					}{e: errors.New("invalid currency requested")}
-				}
+			if len(rest) > 0 {
+				parts = append(parts, rest)
+			}
+			for i := len(parts) - 1; i >= 0; i-- {
+				a += parts[i] + "."
+			}
+			a = a[:len(a)-1]
+			a += ","
+			a += centsStr[len(centsStr)-2:]
+			if negative {
+				a += "-"
+			} else {
 				a += " "
-				centsStr := strconv.Itoa(cents)
-				switch len(centsStr) {
-				case 1:
-					centsStr = "00" + centsStr
-				case 2:
-					centsStr = "0" + centsStr
-				}
-				rest := centsStr[:len(centsStr)-2]
-				var parts []string
-				for len(rest) > 3 {
-					parts = append(parts, rest[len(rest)-3:])
-					rest = rest[:len(rest)-3]
-				}
-				if len(rest) > 0 {
-					parts = append(parts, rest)
-				}
-				for i := len(parts) - 1; i >= 0; i-- {
-					a += parts[i] + "."
-				}
-				a = a[:len(a)-1]
-				a += ","
-				a += centsStr[len(centsStr)-2:]
-				if negative {
-					a += "-"
-				} else {
-					a += " "
-				}
-			} else if locale == "en-US" {
-				if negative {
-					a += "("
-				}
-				if currency == "EUR" {
-					a += "€"
-				} else if currency == "USD" {
-					a += "$"
-				} else {
-					co <- row{e: errors.New("invalid currency requested")}
-				}
-				centsStr := strconv.Itoa(cents)
-				switch len(centsStr) {
-				case 1:
-					centsStr = "00" + centsStr
-				case 2:
-					centsStr = "0" + centsStr
-				}
-				rest := centsStr[:len(centsStr)-2]
-				var parts []string
-				for len(rest) > 3 {
-					parts = append(parts, rest[len(rest)-3:])
-					rest = rest[:len(rest)-3]
-				}
-				if len(rest) > 0 {
-					parts = append(parts, rest)
-				}
-				for i := len(parts) - 1; i >= 0; i-- {
-					a += parts[i] + ","
-				}
-				a = a[:len(a)-1]
-				a += "."
-				a += centsStr[len(centsStr)-2:]
-				if negative {
-					a += ")"
-				} else {
-					a += " "
-				}
+			}
+		} else if locale == "en-US" {
+			if negative {
+				a += "("
+			}
+			if currency == "EUR" {
+				a += "€"
+			} else if currency == "USD" {
+				a += "$"
 			} else {
-				co <- row{e: errors.New("invalid locale requested")}
+				return nil, errors.New("invalid currency requested")
 			}
-			var al int
-			for range a {
-				al++
+			centsStr := strconv.Itoa(cents)
+			switch len(centsStr) {
+			case 1:
+				centsStr = "00" + centsStr
+			case 2:
+				centsStr = "0" + centsStr
 			}
-			co <- struct {
-				i int
-				s string
-				e error
-			}{i: i, s: date + strings.Repeat(" ", 10-len(date)) + " | " + de + " | " +
-				strings.Repeat(" ", 13-al) + a + "\n"}
-		}(i, et)
+			rest := centsStr[:len(centsStr)-2]
+			var parts []string
+			for len(rest) > 3 {
+				parts = append(parts, rest[len(rest)-3:])
+				rest = rest[:len(rest)-3]
+			}
+			if len(rest) > 0 {
+				parts = append(parts, rest)
+			}
+			for i := len(parts) - 1; i >= 0; i-- {
+				a += parts[i] + ","
+			}
+			a = a[:len(a)-1]
+			a += "."
+			a += centsStr[len(centsStr)-2:]
+			if negative {
+				a += ")"
+			} else {
+				a += " "
+			}
+		} else {
+			return nil, errors.New("invalid locale requested")
+		}
+		var al int
+		for range a {
+			al++
+		}
+		rows[i] = row{
+			i: i,
+			s: date + strings.Repeat(" ", 10-len(date)) + " | " + desc + " | " + strings.Repeat(" ", 13-al) + a + "\n",
+			e: nil,
+		}
 	}
-	return co
+	return rows, nil
 }
