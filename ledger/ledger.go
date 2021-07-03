@@ -21,9 +21,25 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			return "", err
 		}
 	}
+
+	sortEntries(entriesCopy)
+
+	header, err := buildHeader(locale)
+	if err != nil {
+		return "", err
+	}
+
+	body, err := buildBody(locale, currency, entriesCopy)
+	if err != nil {
+		return "", err
+	}
+
+	return header + body, nil
+}
+
+func sortEntries(es []Entry) {
 	m1 := map[bool]int{true: 0, false: 1}
 	m2 := map[bool]int{true: -1, false: 1}
-	es := entriesCopy
 	for len(es) > 1 {
 		first, rest := es[0], es[1:]
 		success := false
@@ -40,18 +56,6 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		}
 		es = es[1:]
 	}
-
-	header, err := buildHeader(locale)
-	if err != nil {
-		return "", err
-	}
-
-	body, err := buildBody(locale, currency, entriesCopy)
-	if err != nil {
-		return "", err
-	}
-
-	return header + body, nil
 }
 
 func buildHeader(locale string) (string, error) {
@@ -113,16 +117,16 @@ func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
 			cents = cents * -1
 			negative = true
 		}
-		var a string
+		var amount string
 		if locale == "nl-NL" {
 			if currency == "EUR" {
-				a += "€"
+				amount += "€"
 			} else if currency == "USD" {
-				a += "$"
+				amount += "$"
 			} else {
 				return "", errors.New("invalid currency requested")
 			}
-			a += " "
+			amount += " "
 			centsStr := strconv.Itoa(cents)
 			switch len(centsStr) {
 			case 1:
@@ -140,24 +144,24 @@ func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
 				parts = append(parts, rest)
 			}
 			for i := len(parts) - 1; i >= 0; i-- {
-				a += parts[i] + "."
+				amount += parts[i] + "."
 			}
-			a = a[:len(a)-1]
-			a += ","
-			a += centsStr[len(centsStr)-2:]
+			amount = amount[:len(amount)-1]
+			amount += ","
+			amount += centsStr[len(centsStr)-2:]
 			if negative {
-				a += "-"
+				amount += "-"
 			} else {
-				a += " "
+				amount += " "
 			}
 		} else if locale == "en-US" {
 			if negative {
-				a += "("
+				amount += "("
 			}
 			if currency == "EUR" {
-				a += "€"
+				amount += "€"
 			} else if currency == "USD" {
-				a += "$"
+				amount += "$"
 			} else {
 				return "", errors.New("invalid currency requested")
 			}
@@ -178,24 +182,24 @@ func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
 				parts = append(parts, rest)
 			}
 			for i := len(parts) - 1; i >= 0; i-- {
-				a += parts[i] + ","
+				amount += parts[i] + ","
 			}
-			a = a[:len(a)-1]
-			a += "."
-			a += centsStr[len(centsStr)-2:]
+			amount = amount[:len(amount)-1]
+			amount += "."
+			amount += centsStr[len(centsStr)-2:]
 			if negative {
-				a += ")"
+				amount += ")"
 			} else {
-				a += " "
+				amount += " "
 			}
 		} else {
 			return "", errors.New("invalid locale requested")
 		}
 		var al int
-		for range a {
+		for range amount {
 			al++
 		}
-		body.WriteString(date + strings.Repeat(" ", 10-len(date)) + " | " + desc + " | " + strings.Repeat(" ", 13-al) + a + "\n")
+		body.WriteString(date + strings.Repeat(" ", 10-len(date)) + " | " + desc + " | " + strings.Repeat(" ", 13-al) + amount + "\n")
 	}
 
 	return body.String(), nil
