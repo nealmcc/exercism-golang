@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -58,15 +59,12 @@ func sortEntries(es []Entry) {
 }
 
 func buildHeader(locale string) string {
+	const format string = "%-10s | %-25s | %s\n"
 	switch locale {
 	case "nl-NL":
-		return "Datum" + strings.Repeat(" ", 10-len("Datum")) +
-			" | " + "Omschrijving" + strings.Repeat(" ", 25-len("Omschrijving")) +
-			" | " + "Verandering" + "\n"
+		return fmt.Sprintf(format, "Datum", "Omschrijving", "Verandering")
 	default:
-		return "Date" + strings.Repeat(" ", 10-len("Date")) +
-			" | " + "Description" + strings.Repeat(" ", 25-len("Description")) +
-			" | " + "Change" + "\n"
+		return fmt.Sprintf(format, "Date", "Description", "Change")
 	}
 }
 
@@ -183,7 +181,7 @@ func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
 		for range amount {
 			al++
 		}
-		body.WriteString(date + strings.Repeat(" ", 10-len(date)) + " | " + desc + " | " + strings.Repeat(" ", 13-al) + amount + "\n")
+		fmt.Fprintf(&body, "%-10s | %-25s | %13s\n", date, desc, amount)
 	}
 
 	return body.String(), nil
