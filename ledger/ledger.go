@@ -32,23 +32,7 @@ func FormatLedger(currency, locale string, entries []Entry) (string, error) {
 		return "", err
 	}
 
-	// sort the rows by date, description, cents
-	sort.Slice(rows, func(i, j int) bool {
-		if rows[i].date.Before(rows[j].date) {
-			return true
-		}
-		if rows[i].date.After(rows[j].date) {
-			return false
-		}
-		if rows[i].description < rows[j].description {
-			return true
-		}
-		if rows[i].description > rows[j].description {
-			return false
-		}
-		return rows[i].cents < rows[j].cents
-	})
-
+	sortRows(rows)
 	header := buildHeader(locale)
 	body := buildBody(locale, currency, rows)
 	return header + body, nil
@@ -79,6 +63,25 @@ func parse(entries []Entry) ([]row, error) {
 	return r, nil
 }
 
+// sortRows orders the rows by date asc, description asc, cents asc
+func sortRows(rows []row) {
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].date.Before(rows[j].date) {
+			return true
+		}
+		if rows[i].date.After(rows[j].date) {
+			return false
+		}
+		if rows[i].description < rows[j].description {
+			return true
+		}
+		if rows[i].description > rows[j].description {
+			return false
+		}
+		return rows[i].cents < rows[j].cents
+	})
+}
+
 func buildHeader(locale string) string {
 	const format string = "%-10s | %-25s | %s\n"
 	switch locale {
@@ -93,7 +96,7 @@ func buildBody(locale, currency string, rows []row) string {
 	var body strings.Builder
 	for _, r := range rows {
 		date := formatDate(locale, r.date)
-		desc := fixedLength(r.description, 25)
+		desc := formatDesc(r.description)
 		amount := formatAmount(locale, currency, r.cents)
 		fmt.Fprintf(&body, "%-10s | %-25s | %13s\n", date, desc, amount)
 	}
@@ -108,90 +111,83 @@ func formatDate(locale string, d time.Time) string {
 	}
 }
 
-func fixedLength(s string, length int) string {
-	if len(s) > length {
-		return s[:length-3] + "..."
+func formatDesc(desc string) string {
+	const max = 25
+	if len(desc) > max {
+		return desc[:max-3] + "..."
 	}
-	return fmt.Sprintf("%-"+strconv.Itoa(length)+"s", s)
+	return fmt.Sprintf("%-"+strconv.Itoa(max)+"s", desc)
 }
 
 func formatAmount(locale, currency string, cents int) string {
-	negative := false
-	if cents < 0 {
-		cents = cents * -1
-		negative = true
-	}
-	amount := ""
 	if locale == "nl-NL" {
-		if currency == "EUR" {
-			amount += "€"
-		} else {
-			amount += "$"
-		}
-		amount += " "
-		centsStr := strconv.Itoa(cents)
-		switch len(centsStr) {
-		case 1:
-			centsStr = "00" + centsStr
-		case 2:
-			centsStr = "0" + centsStr
-		}
-		rest := centsStr[:len(centsStr)-2]
-		var parts []string
-		for len(rest) > 3 {
-			parts = append(parts, rest[len(rest)-3:])
-			rest = rest[:len(rest)-3]
-		}
-		if len(rest) > 0 {
-			parts = append(parts, rest)
-		}
-		for i := len(parts) - 1; i >= 0; i-- {
-			amount += parts[i] + "."
-		}
-		amount = amount[:len(amount)-1]
-		amount += ","
-		amount += centsStr[len(centsStr)-2:]
-		if negative {
-			amount += "-"
-		} else {
-			amount += " "
-		}
-	} else {
-		if negative {
-			amount += "("
-		}
-		if currency == "EUR" {
-			amount += "€"
-		} else {
-			amount += "$"
-		}
-		centsStr := strconv.Itoa(cents)
-		switch len(centsStr) {
-		case 1:
-			centsStr = "00" + centsStr
-		case 2:
-			centsStr = "0" + centsStr
-		}
-		rest := centsStr[:len(centsStr)-2]
-		var parts []string
-		for len(rest) > 3 {
-			parts = append(parts, rest[len(rest)-3:])
-			rest = rest[:len(rest)-3]
-		}
-		if len(rest) > 0 {
-			parts = append(parts, rest)
-		}
-		for i := len(parts) - 1; i >= 0; i-- {
-			amount += parts[i] + ","
-		}
-		amount = amount[:len(amount)-1]
-		amount += "."
-		amount += centsStr[len(centsStr)-2:]
-		if negative {
-			amount += ")"
-		} else {
-			amount += " "
-		}
+		return amountDutch(cents, currency)
 	}
-	return amount
+	return amountUSA(cents, currency)
+}
+
+func amountDutch(cents int, currency string) string {
+	var b strings.Builder
+	negative := cents < 0
+	if negative {
+		cents = cents * -1
+	}
+	writeCurrency(&b, currency)
+	b.WriteByte(' ')
+	whole, cents := cents/100, cents%100
+	fmt.Fprintf(&b, "%s,%02d", separate(whole, '.'), cents)
+	if negative {
+		b.WriteByte('-')
+	} else {
+		b.WriteByte(' ')
+	}
+	return b.String()
+}
+
+func amountUSA(cents int, currency string) string {
+	var b strings.Builder
+	negative := cents < 0
+	if negative {
+		cents = cents * -1
+	}
+	if negative {
+		b.WriteByte('(')
+	}
+	writeCurrency(&b, currency)
+	whole, cents := cents/100, cents%100
+	fmt.Fprintf(&b, "%s.%02d", separate(whole, ','), cents)
+	if negative {
+		b.WriteByte(')')
+	} else {
+		b.WriteByte(' ')
+	}
+	return b.String()
+}
+
+func writeCurrency(b *strings.Builder, currency string) {
+	if currency == "EUR" {
+		b.WriteRune('€')
+	} else {
+		b.WriteByte('$')
+	}
+}
+
+// separate the given integer using the given thousands separator
+func separate(n int, sep byte) string {
+	var b strings.Builder
+	rest := strconv.Itoa(n)
+	parts := make([]string, 0, len(rest)/3+1)
+	for len(rest) > 3 {
+		parts = append(parts, rest[len(rest)-3:])
+		rest = rest[:len(rest)-3]
+	}
+	if len(rest) > 0 {
+		parts = append(parts, rest)
+	}
+	for i := len(parts) - 1; i >= 1; i-- {
+		b.WriteString(parts[i])
+		b.WriteByte(sep)
+	}
+	b.WriteString(parts[0])
+	return b.String()
 }
