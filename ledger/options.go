@@ -5,17 +5,16 @@ import (
 )
 
 type options struct {
-	currencySymbol       string
-	dateLayout           string
-	negPrefix, negSuffix string
-	posPrefix, posSuffix string
-	thousands            string
-	decimal              string
-	terms                map[string]string
-	maxDescription       int
+	dateLayout           string            // used by (t time.Time) Format()
+	currencySymbol       string            // the currency symbol
+	symbolPosition       symbolPosition    // where to position the symbol
+	negPrefix, negSuffix string            // prefixes and suffixes for positive
+	posPrefix, posSuffix string            // and negative monetary amounts
+	thousands            string            // thousands separator
+	decimal              string            // decimal point separator
+	terms                map[string]string // override the default header names
+	maxDescription       int               // max length of the description
 }
-
-type translateFn = func(string) string
 
 // Option overrides the default formatting behaviour of the Ledger.
 // To obtain Options for use, call the various With...() functions.
@@ -31,7 +30,7 @@ func WithCurrency(c string) (Option, error) {
 	case "USD":
 		return currencyOpt("$"), nil
 	default:
-		return nil, errors.New("invalid currency requested")
+		return nil, errors.New("invalid currency")
 	}
 }
 
@@ -44,7 +43,7 @@ func WithLocale(l string) (Option, error) {
 	case "en-US":
 		return usaOpt, nil
 	default:
-		return nil, errors.New("invalid locale requested")
+		return nil, errors.New("invalid locale")
 	}
 }
 
@@ -63,7 +62,14 @@ func (c currencyOpt) apply(o *options) {
 
 var (
 	dutchOpt localeOpt = localeOpt{
-		dateLayout: "02-01-2006",
+		dateLayout:     "02-01-2006",
+		posPrefix:      " ",
+		posSuffix:      " ",
+		negPrefix:      " ",
+		negSuffix:      "-",
+		thousands:      ".",
+		decimal:        ",",
+		symbolPosition: beforePrefix,
 		terms: map[string]string{
 			"Date":        "Datum",
 			"Description": "Omschrijving",
@@ -72,29 +78,45 @@ var (
 	}
 
 	usaOpt localeOpt = localeOpt{
-		dateLayout: "01/02/2006",
+		dateLayout:     "01/02/2006",
+		posPrefix:      " ",
+		posSuffix:      " ",
+		negPrefix:      "(",
+		negSuffix:      ")",
+		thousands:      ",",
+		decimal:        ".",
+		symbolPosition: afterPrefix,
 		terms: map[string]string{
 			"Amount": "Change",
 		},
 	}
 )
 
+type symbolPosition uint
+
+const (
+	beforePrefix symbolPosition = iota
+	afterPrefix
+	beforeSuffix
+	afterSuffix
+)
+
 type localeOpt struct {
-	// the date format as used by (t time.Time) Format()
-	dateLayout string
-	// prefixes and suffixes for positive and negative monetary amounts
+	dateLayout           string
 	negPrefix, negSuffix string
 	posPrefix, posSuffix string
-	// thousands separator
-	thousands string
-	// decimal point separator
-	decimal string
-	// terms can selectively override the default header names
-	terms map[string]string
+	symbolPosition       symbolPosition
+	thousands            string
+	decimal              string
+	terms                map[string]string
 }
 
 func (l localeOpt) apply(o *options) {
 	o.dateLayout = l.dateLayout
+	o.negPrefix, o.negSuffix = l.negPrefix, l.negSuffix
+	o.posPrefix, o.posSuffix = l.posPrefix, l.posSuffix
+	o.symbolPosition = l.symbolPosition
+	o.thousands, o.decimal = l.thousands, l.decimal
 	for k, v := range l.terms {
 		o.terms[k] = v
 	}

@@ -31,7 +31,7 @@ func FormatLedger(currency, locale string, entries []Entry) (string, error) {
 		return "", err
 	}
 
-	entriesCopy, err := cloneAndParse(entries)
+	entriesCopy, err := cloneAndParseDate(entries)
 	if err != nil {
 		return "", err
 	}
@@ -42,7 +42,7 @@ func FormatLedger(currency, locale string, entries []Entry) (string, error) {
 
 	ledger.WriteHeader(&b)
 	for _, e := range entriesCopy {
-		ledger.WriteEntry(&b, e, locale, currency)
+		ledger.WriteEntry(&b, e)
 	}
 	return b.String(), nil
 }
@@ -58,12 +58,13 @@ type Ledger struct {
 func New(opts ...Option) *Ledger {
 	// defaults:
 	options := options{
-		currencySymbol: "$",
 		dateLayout:     "2006-01-02",
+		currencySymbol: " $",
+		symbolPosition: afterSuffix,
 		negPrefix:      "(",
 		negSuffix:      ")",
-		posPrefix:      "",
-		posSuffix:      "",
+		posPrefix:      " ",
+		posSuffix:      " ",
 		thousands:      ",",
 		decimal:        ".",
 		terms: map[string]string{
@@ -81,123 +82,7 @@ func New(opts ...Option) *Ledger {
 	return &Ledger{options}
 }
 
-// WriteHeader writes the header for this ledger to the given writer,
-// with a trailing newline character.
-// Language-specific terminology can be provided when creating a new
-// Ledger by passing in either a WithTerms() Option, or a WithLocale() Option.
-// If multiple such Options are passed in, then the last one is used.
-func (l *Ledger) WriteHeader(w io.Writer) error {
-	format := "%-10s | %-" + strconv.Itoa(l.maxDescription) + "s | %s\n"
-	date, ok := l.terms["Date"]
-	if !ok {
-		date = "Date"
-	}
-
-	desc, ok := l.terms["Description"]
-	if !ok {
-		desc = "Description"
-	}
-
-	amount, ok := l.terms["Amount"]
-	if !ok {
-		amount = "Amount"
-	}
-
-	_, err := fmt.Fprintf(w, format, date, desc, amount)
-	return err
-}
-
-func (l *Ledger) WriteEntry(w io.Writer, e Entry, locale, currency string) error {
-	date := e.strongDate.Format(l.dateLayout)
-	desc := formatDesc(e.Description, 25 /* maxLen */)
-	amount := formatAmount(locale, currency, e.Change)
-	_, err := fmt.Fprintf(w, "%-10s | %-25s | %13s\n", date, desc, amount)
-	return err
-}
-
-func formatDesc(desc string, maxLen int) string {
-	if len(desc) > maxLen {
-		return desc[:maxLen-3] + "..."
-	}
-	return fmt.Sprintf("%-"+strconv.Itoa(maxLen)+"s", desc)
-}
-
-func formatAmount(locale, currency string, cents int) string {
-	switch locale {
-	case "nl-NL":
-		return amountDutch(cents, currency)
-	default:
-		return amountUSA(cents, currency)
-	}
-}
-
-func amountDutch(cents int, currency string) string {
-	var b strings.Builder
-	negative := cents < 0
-	if negative {
-		cents = cents * -1
-	}
-	writeCurrency(&b, currency)
-	b.WriteByte(' ')
-	whole, cents := cents/100, cents%100
-	fmt.Fprintf(&b, "%s,%02d", formatThousands(whole, '.'), cents)
-	if negative {
-		b.WriteByte('-')
-	} else {
-		b.WriteByte(' ')
-	}
-	return b.String()
-}
-
-func amountUSA(cents int, currency string) string {
-	var b strings.Builder
-	negative := cents < 0
-	if negative {
-		cents = cents * -1
-	}
-	if negative {
-		b.WriteByte('(')
-	}
-	writeCurrency(&b, currency)
-	whole, cents := cents/100, cents%100
-	fmt.Fprintf(&b, "%s.%02d", formatThousands(whole, ','), cents)
-	if negative {
-		b.WriteByte(')')
-	} else {
-		b.WriteByte(' ')
-	}
-	return b.String()
-}
-
-func writeCurrency(b *strings.Builder, currency string) {
-	if currency == "EUR" {
-		b.WriteRune('€')
-	} else {
-		b.WriteByte('$')
-	}
-}
-
-// formatThousands separates the the given integer using a thousands separator
-func formatThousands(n int, sep byte) string {
-	var b strings.Builder
-	rest := strconv.Itoa(n)
-	parts := make([]string, 0, len(rest)/3+1)
-	for len(rest) > 3 {
-		parts = append(parts, rest[len(rest)-3:])
-		rest = rest[:len(rest)-3]
-	}
-	if len(rest) > 0 {
-		parts = append(parts, rest)
-	}
-	for i := len(parts) - 1; i >= 1; i-- {
-		b.WriteString(parts[i])
-		b.WriteByte(sep)
-	}
-	b.WriteString(parts[0])
-	return b.String()
-}
-
-func cloneAndParse(entries []Entry) ([]Entry, error) {
+func cloneAndParseDate(entries []Entry) ([]Entry, error) {
 	r := make([]Entry, len(entries))
 	for i, e := range entries {
 		date, err := time.Parse("2006-01-02", e.Date)
@@ -213,7 +98,6 @@ func cloneAndParse(entries []Entry) ([]Entry, error) {
 	return r, nil
 }
 
-// sortEntries orders the entries by date, description, cents.
 func sortEntries(entries []Entry) {
 	sort.Slice(entries, func(i, j int) bool {
 		if entries[i].strongDate.Before(entries[j].strongDate) {
@@ -230,4 +114,114 @@ func sortEntries(entries []Entry) {
 		}
 		return entries[i].Change < entries[j].Change
 	})
+}
+
+// WriteHeader writes the header for this ledger to the given writer,
+// with a trailing newline character.
+// Language-specific terminology can be provided when creating a new
+// Ledger by passing in either a WithTerms() Option, or a WithLocale() Option.
+// If multiple such Options are passed in, then the last one is used.
+func (j *Ledger) WriteHeader(w io.Writer) error {
+	format := "%-10s | %-" + strconv.Itoa(j.maxDescription) + "s | %s\n"
+	date, ok := j.terms["Date"]
+	if !ok {
+		date = "Date"
+	}
+
+	desc, ok := j.terms["Description"]
+	if !ok {
+		desc = "Description"
+	}
+
+	amount, ok := j.terms["Amount"]
+	if !ok {
+		amount = "Amount"
+	}
+
+	_, err := fmt.Fprintf(w, format, date, desc, amount)
+	return err
+}
+
+// WriteEntry writes the given entry to the writer, using this Ledger's format
+func (j *Ledger) WriteEntry(w io.Writer, e Entry) error {
+	date := e.strongDate.Format(j.dateLayout)
+	desc := j.formatDesc(e.Description)
+	change := j.formatChange(e.Change)
+	_, err := fmt.Fprintf(w, "%s | %s | %13s\n", date, desc, change)
+	return err
+}
+
+func (j *Ledger) formatDesc(desc string) string {
+	maxLen := j.maxDescription
+	if len(desc) > maxLen {
+		return desc[:maxLen-3] + "..."
+	}
+	return fmt.Sprintf("%-"+strconv.Itoa(maxLen)+"s", desc)
+}
+
+func (j *Ledger) formatChange(cents int) string {
+	var b strings.Builder
+	negative := cents < 0
+	if negative {
+		cents = cents * -1
+	}
+
+	if j.symbolPosition == beforePrefix {
+		b.WriteString(j.currencySymbol)
+	}
+
+	if negative {
+		b.WriteString(j.negPrefix)
+	} else {
+		b.WriteString(j.posPrefix)
+	}
+
+	if j.symbolPosition == afterPrefix {
+		b.WriteString(j.currencySymbol)
+	}
+
+	whole, cents := cents/100, cents%100
+	b.WriteString(formatThousands(whole, j.thousands))
+	b.WriteString(j.decimal)
+	fmt.Fprintf(&b, "%02d", cents)
+
+	if j.symbolPosition == beforeSuffix {
+		b.WriteString(j.currencySymbol)
+	}
+
+	if negative {
+		b.WriteString(j.negSuffix)
+	} else {
+		b.WriteString(j.posSuffix)
+	}
+
+	if j.symbolPosition == afterSuffix {
+		b.WriteString(j.currencySymbol)
+	}
+
+	return b.String()
+}
+
+// formatThousands separates the the given integer using a thousands separator
+func formatThousands(n int, sep string) string {
+	rest := strconv.Itoa(n)
+	if len(sep) == 0 {
+		return rest
+	}
+
+	var b strings.Builder
+	parts := make([]string, 0, len(rest)/3+1)
+	for len(rest) > 3 {
+		parts = append(parts, rest[len(rest)-3:])
+		rest = rest[:len(rest)-3]
+	}
+	if len(rest) > 0 {
+		parts = append(parts, rest)
+	}
+	for i := len(parts) - 1; i >= 1; i-- {
+		b.WriteString(parts[i])
+		b.WriteString(sep)
+	}
+	b.WriteString(parts[0])
+	return b.String()
 }
