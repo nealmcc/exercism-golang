@@ -16,6 +16,13 @@ type Entry struct {
 	Change      int // in cents
 }
 
+// row is an entry with a strongly-typed date
+type row struct {
+	date        time.Time
+	description string
+	cents       int
+}
+
 // FormatLedger returns the list of entries formatted according to the given
 // currency and locale, with descriptions set to a fixed length
 func FormatLedger(currency, locale string, entries []Entry) (string, error) {
@@ -38,13 +45,6 @@ func FormatLedger(currency, locale string, entries []Entry) (string, error) {
 	return header + body, nil
 }
 
-// row is an entry with a strongly-typed date
-type row struct {
-	date        time.Time
-	description string
-	cents       int
-}
-
 // parse checks all the incoming entries to make sure the date is formatted
 // correctly, and returns the strongly-typed rows
 func parse(entries []Entry) ([]row, error) {
@@ -63,7 +63,7 @@ func parse(entries []Entry) ([]row, error) {
 	return r, nil
 }
 
-// sortRows orders the rows by date asc, description asc, cents asc
+// sortRows orders the rows by date, description, cents.
 func sortRows(rows []row) {
 	sort.Slice(rows, func(i, j int) bool {
 		if rows[i].date.Before(rows[j].date) {
