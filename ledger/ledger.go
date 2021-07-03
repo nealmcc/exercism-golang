@@ -108,20 +108,11 @@ func (l *Ledger) WriteHeader(w io.Writer) error {
 }
 
 func (l *Ledger) WriteEntry(w io.Writer, e Entry, locale, currency string) error {
-	date := formatDate(locale, e.strongDate)
+	date := e.strongDate.Format(l.dateLayout)
 	desc := formatDesc(e.Description, 25 /* maxLen */)
 	amount := formatAmount(locale, currency, e.Change)
 	_, err := fmt.Fprintf(w, "%-10s | %-25s | %13s\n", date, desc, amount)
 	return err
-}
-
-func formatDate(locale string, d time.Time) string {
-	switch locale {
-	case "nl-NL":
-		return d.Format("02-01-2006")
-	default:
-		return d.Format("01/02/2006")
-	}
 }
 
 func formatDesc(desc string, maxLen int) string {
