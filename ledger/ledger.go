@@ -3,17 +3,22 @@ package ledger
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
+// Entry is a transaction in the ledger
 type Entry struct {
-	Date        string // "Y-m-d"
+	Date        string // "YYYY-mm-dd"
 	Description string
 	Change      int // in cents
 }
 
-func FormatLedger(currency string, locale string, entries []Entry) (string, error) {
+// FormatLedger returns the list of entries formatted according to the given
+// currency and locale, with descriptions set to a fixed length
+func FormatLedger(currency, locale string, entries []Entry) (string, error) {
 	if currency != "EUR" && currency != "USD" {
 		return "", errors.New("invalid currency requested")
 	}
@@ -22,40 +27,56 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		return "", errors.New("invalid locale requested")
 	}
 
-	header := buildHeader(locale)
-
-	entriesCopy := make([]Entry, 0, len(entries))
-	entriesCopy = append(entriesCopy, entries...)
-
-	sortEntries(entriesCopy)
-
-	body, err := buildBody(locale, currency, entriesCopy)
+	rows, err := parse(entries)
 	if err != nil {
 		return "", err
 	}
 
+	// sort the rows by date, description, cents
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].date.Before(rows[j].date) {
+			return true
+		}
+		if rows[i].date.After(rows[j].date) {
+			return false
+		}
+		if rows[i].description < rows[j].description {
+			return true
+		}
+		if rows[i].description > rows[j].description {
+			return false
+		}
+		return rows[i].cents < rows[j].cents
+	})
+
+	header := buildHeader(locale)
+	body := buildBody(locale, currency, rows)
 	return header + body, nil
 }
 
-func sortEntries(es []Entry) {
-	m1 := map[bool]int{true: 0, false: 1}
-	m2 := map[bool]int{true: -1, false: 1}
-	for len(es) > 1 {
-		first, rest := es[0], es[1:]
-		success := false
-		for !success {
-			success = true
-			for i, e := range rest {
-				if (m1[e.Date == first.Date]*m2[e.Date < first.Date]*4 +
-					m1[e.Description == first.Description]*m2[e.Description < first.Description]*2 +
-					m1[e.Change == first.Change]*m2[e.Change < first.Change]*1) < 0 {
-					es[0], es[i+1] = es[i+1], es[0]
-					success = false
-				}
-			}
+// row is an entry with a strongly-typed date
+type row struct {
+	date        time.Time
+	description string
+	cents       int
+}
+
+// parse checks all the incoming entries to make sure the date is formatted
+// correctly, and returns the strongly-typed rows
+func parse(entries []Entry) ([]row, error) {
+	r := make([]row, len(entries))
+	for i, e := range entries {
+		date, err := time.Parse("2006-01-02", e.Date)
+		if err != nil {
+			return nil, errors.New("date format invalid")
 		}
-		es = es[1:]
+		r[i] = row{
+			date:        date,
+			description: e.Description,
+			cents:       e.Change,
+		}
 	}
+	return r, nil
 }
 
 func buildHeader(locale string) string {
@@ -68,121 +89,109 @@ func buildHeader(locale string) string {
 	}
 }
 
-func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
+func buildBody(locale, currency string, rows []row) string {
 	var body strings.Builder
-	for _, entry := range entriesCopy {
-		if len(entry.Date) != 10 {
-			return "", errors.New("date format invalid")
-		}
-		yyyy, d2, mm, d4, dd := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
-		if d2 != '-' {
-			return "", errors.New("year-month separator invalid")
-		}
-		if d4 != '-' {
-			return "", errors.New("month-day separator invalid")
-		}
-
-		// set description to a fixed length
-		desc := entry.Description
-		if len(desc) > 25 {
-			desc = desc[:22] + "..."
-		} else {
-			desc = desc + strings.Repeat(" ", 25-len(desc))
-		}
-
-		// convert the date format to either en-US or nl-NL
-		var date string
-		if locale == "nl-NL" {
-			date = dd + "-" + mm + "-" + yyyy
-		} else if locale == "en-US" {
-			date = mm + "/" + dd + "/" + yyyy
-		}
-
-		// format the cents according to locale and postive / negative:
-		negative := false
-		cents := entry.Change
-		if cents < 0 {
-			cents = cents * -1
-			negative = true
-		}
-		var amount string
-		if locale == "nl-NL" {
-			if currency == "EUR" {
-				amount += "€"
-			} else {
-				amount += "$"
-			}
-			amount += " "
-			centsStr := strconv.Itoa(cents)
-			switch len(centsStr) {
-			case 1:
-				centsStr = "00" + centsStr
-			case 2:
-				centsStr = "0" + centsStr
-			}
-			rest := centsStr[:len(centsStr)-2]
-			var parts []string
-			for len(rest) > 3 {
-				parts = append(parts, rest[len(rest)-3:])
-				rest = rest[:len(rest)-3]
-			}
-			if len(rest) > 0 {
-				parts = append(parts, rest)
-			}
-			for i := len(parts) - 1; i >= 0; i-- {
-				amount += parts[i] + "."
-			}
-			amount = amount[:len(amount)-1]
-			amount += ","
-			amount += centsStr[len(centsStr)-2:]
-			if negative {
-				amount += "-"
-			} else {
-				amount += " "
-			}
-		} else {
-			if negative {
-				amount += "("
-			}
-			if currency == "EUR" {
-				amount += "€"
-			} else {
-				amount += "$"
-			}
-			centsStr := strconv.Itoa(cents)
-			switch len(centsStr) {
-			case 1:
-				centsStr = "00" + centsStr
-			case 2:
-				centsStr = "0" + centsStr
-			}
-			rest := centsStr[:len(centsStr)-2]
-			var parts []string
-			for len(rest) > 3 {
-				parts = append(parts, rest[len(rest)-3:])
-				rest = rest[:len(rest)-3]
-			}
-			if len(rest) > 0 {
-				parts = append(parts, rest)
-			}
-			for i := len(parts) - 1; i >= 0; i-- {
-				amount += parts[i] + ","
-			}
-			amount = amount[:len(amount)-1]
-			amount += "."
-			amount += centsStr[len(centsStr)-2:]
-			if negative {
-				amount += ")"
-			} else {
-				amount += " "
-			}
-		}
-		var al int
-		for range amount {
-			al++
-		}
+	for _, r := range rows {
+		date := formatDate(locale, r.date)
+		desc := fixedLength(r.description, 25)
+		amount := formatAmount(locale, currency, r.cents)
 		fmt.Fprintf(&body, "%-10s | %-25s | %13s\n", date, desc, amount)
 	}
+	return body.String()
+}
 
-	return body.String(), nil
+func formatDate(locale string, d time.Time) string {
+	if locale == "nl-NL" {
+		return d.Format("02-01-2006")
+	} else {
+		return d.Format("01/02/2006")
+	}
+}
+
+func fixedLength(s string, length int) string {
+	if len(s) > length {
+		return s[:length-3] + "..."
+	}
+	return fmt.Sprintf("%-"+strconv.Itoa(length)+"s", s)
+}
+
+func formatAmount(locale, currency string, cents int) string {
+	negative := false
+	if cents < 0 {
+		cents = cents * -1
+		negative = true
+	}
+	amount := ""
+	if locale == "nl-NL" {
+		if currency == "EUR" {
+			amount += "€"
+		} else {
+			amount += "$"
+		}
+		amount += " "
+		centsStr := strconv.Itoa(cents)
+		switch len(centsStr) {
+		case 1:
+			centsStr = "00" + centsStr
+		case 2:
+			centsStr = "0" + centsStr
+		}
+		rest := centsStr[:len(centsStr)-2]
+		var parts []string
+		for len(rest) > 3 {
+			parts = append(parts, rest[len(rest)-3:])
+			rest = rest[:len(rest)-3]
+		}
+		if len(rest) > 0 {
+			parts = append(parts, rest)
+		}
+		for i := len(parts) - 1; i >= 0; i-- {
+			amount += parts[i] + "."
+		}
+		amount = amount[:len(amount)-1]
+		amount += ","
+		amount += centsStr[len(centsStr)-2:]
+		if negative {
+			amount += "-"
+		} else {
+			amount += " "
+		}
+	} else {
+		if negative {
+			amount += "("
+		}
+		if currency == "EUR" {
+			amount += "€"
+		} else {
+			amount += "$"
+		}
+		centsStr := strconv.Itoa(cents)
+		switch len(centsStr) {
+		case 1:
+			centsStr = "00" + centsStr
+		case 2:
+			centsStr = "0" + centsStr
+		}
+		rest := centsStr[:len(centsStr)-2]
+		var parts []string
+		for len(rest) > 3 {
+			parts = append(parts, rest[len(rest)-3:])
+			rest = rest[:len(rest)-3]
+		}
+		if len(rest) > 0 {
+			parts = append(parts, rest)
+		}
+		for i := len(parts) - 1; i >= 0; i-- {
+			amount += parts[i] + ","
+		}
+		amount = amount[:len(amount)-1]
+		amount += "."
+		amount += centsStr[len(centsStr)-2:]
+		if negative {
+			amount += ")"
+		} else {
+			amount += " "
+		}
+	}
+	return amount
 }
