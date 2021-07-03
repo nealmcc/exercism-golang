@@ -12,12 +12,6 @@ type Entry struct {
 	Change      int // in cents
 }
 
-type row struct {
-	i int
-	s string
-	e error
-}
-
 func FormatLedger(currency string, locale string, entries []Entry) (string, error) {
 	var entriesCopy []Entry
 	entriesCopy = append(entriesCopy, entries...)
@@ -52,16 +46,12 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		return "", err
 	}
 
-	rows, err := processEntries(locale, currency, entriesCopy)
+	body, err := buildBody(locale, currency, entriesCopy)
 	if err != nil {
 		return "", err
 	}
 
-	var body strings.Builder
-	for _, r := range rows {
-		body.WriteString(r.s)
-	}
-	return header + body.String(), nil
+	return header + body, nil
 }
 
 func buildHeader(locale string) (string, error) {
@@ -86,18 +76,18 @@ func buildHeader(locale string) (string, error) {
 	return header, nil
 }
 
-func processEntries(locale, currency string, entriesCopy []Entry) ([]row, error) {
-	rows := make([]row, len(entriesCopy))
-	for i, entry := range entriesCopy {
+func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
+	var body strings.Builder
+	for _, entry := range entriesCopy {
 		if len(entry.Date) != 10 {
-			return nil, errors.New("date format invalid")
+			return "", errors.New("date format invalid")
 		}
 		yyyy, d2, mm, d4, dd := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
 		if d2 != '-' {
-			return nil, errors.New("year-month separator invalid")
+			return "", errors.New("year-month separator invalid")
 		}
 		if d4 != '-' {
-			return nil, errors.New("month-day separator invalid")
+			return "", errors.New("month-day separator invalid")
 		}
 
 		// set description to a fixed length
@@ -130,7 +120,7 @@ func processEntries(locale, currency string, entriesCopy []Entry) ([]row, error)
 			} else if currency == "USD" {
 				a += "$"
 			} else {
-				return nil, errors.New("invalid currency requested")
+				return "", errors.New("invalid currency requested")
 			}
 			a += " "
 			centsStr := strconv.Itoa(cents)
@@ -169,7 +159,7 @@ func processEntries(locale, currency string, entriesCopy []Entry) ([]row, error)
 			} else if currency == "USD" {
 				a += "$"
 			} else {
-				return nil, errors.New("invalid currency requested")
+				return "", errors.New("invalid currency requested")
 			}
 			centsStr := strconv.Itoa(cents)
 			switch len(centsStr) {
@@ -199,17 +189,14 @@ func processEntries(locale, currency string, entriesCopy []Entry) ([]row, error)
 				a += " "
 			}
 		} else {
-			return nil, errors.New("invalid locale requested")
+			return "", errors.New("invalid locale requested")
 		}
 		var al int
 		for range a {
 			al++
 		}
-		rows[i] = row{
-			i: i,
-			s: date + strings.Repeat(" ", 10-len(date)) + " | " + desc + " | " + strings.Repeat(" ", 13-al) + a + "\n",
-			e: nil,
-		}
+		body.WriteString(date + strings.Repeat(" ", 10-len(date)) + " | " + desc + " | " + strings.Repeat(" ", 13-al) + a + "\n")
 	}
-	return rows, nil
+
+	return body.String(), nil
 }
