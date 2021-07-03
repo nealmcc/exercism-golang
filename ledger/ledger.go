@@ -10,6 +10,14 @@ import (
 	"time"
 )
 
+// Entry is a transaction in the ledger
+type Entry struct {
+	Date        string // "YYYY-mm-dd"
+	strongDate  time.Time
+	Description string
+	Change      int // in cents
+}
+
 // FormatLedger returns the list of entries formatted according to the given
 // currency and locale, with descriptions set to a fixed length
 func FormatLedger(currency, locale string, entries []Entry) (string, error) {
@@ -23,21 +31,18 @@ func FormatLedger(currency, locale string, entries []Entry) (string, error) {
 		return "", err
 	}
 
-	ledger := New(currencyOpt, localeOpt)
-
-	rows, err := convertEntry(entries)
+	entriesCopy, err := cloneAndParse(entries)
 	if err != nil {
 		return "", err
 	}
-	sortRows(rows)
+	sortEntries(entriesCopy)
 
+	ledger := New(currencyOpt, localeOpt)
 	var b strings.Builder
+
 	ledger.WriteHeader(&b)
-	for _, r := range rows {
-		date := formatDate(locale, r.date)
-		desc := formatDesc(r.description, 25 /* maxLen */)
-		amount := formatAmount(locale, currency, r.cents)
-		fmt.Fprintf(&b, "%-10s | %-25s | %13s\n", date, desc, amount)
+	for _, e := range entriesCopy {
+		ledger.WriteEntry(&b, e, locale, currency)
 	}
 	return b.String(), nil
 }
@@ -47,13 +52,6 @@ func FormatLedger(currency, locale string, entries []Entry) (string, error) {
 // The formatting of a Ledger is controlled by Options.
 type Ledger struct {
 	options
-}
-
-// Entry is a transaction in the ledger
-type Entry struct {
-	Date        string // "YYYY-mm-dd"
-	Description string
-	Change      int // in cents
 }
 
 // New creates a new Ledger which will use the given formatting options
@@ -109,39 +107,12 @@ func (l *Ledger) WriteHeader(w io.Writer) error {
 	return err
 }
 
-func convertEntry(entries []Entry) ([]row, error) {
-	r := make([]row, len(entries))
-	for i, e := range entries {
-		date, err := time.Parse("2006-01-02", e.Date)
-		if err != nil {
-			return nil, errors.New("malformed date")
-		}
-		r[i] = row{
-			date:        date,
-			description: e.Description,
-			cents:       e.Change,
-		}
-	}
-	return r, nil
-}
-
-// sortRows orders the rows by date, description, cents.
-func sortRows(rows []row) {
-	sort.Slice(rows, func(i, j int) bool {
-		if rows[i].date.Before(rows[j].date) {
-			return true
-		}
-		if rows[i].date.After(rows[j].date) {
-			return false
-		}
-		if rows[i].description < rows[j].description {
-			return true
-		}
-		if rows[i].description > rows[j].description {
-			return false
-		}
-		return rows[i].cents < rows[j].cents
-	})
+func (l *Ledger) WriteEntry(w io.Writer, e Entry, locale, currency string) error {
+	date := formatDate(locale, e.strongDate)
+	desc := formatDesc(e.Description, 25 /* maxLen */)
+	amount := formatAmount(locale, currency, e.Change)
+	_, err := fmt.Fprintf(w, "%-10s | %-25s | %13s\n", date, desc, amount)
+	return err
 }
 
 func formatDate(locale string, d time.Time) string {
@@ -235,9 +206,37 @@ func formatThousands(n int, sep byte) string {
 	return b.String()
 }
 
-// row is an entry with a strongly-typed date
-type row struct {
-	date        time.Time
-	description string
-	cents       int
+func cloneAndParse(entries []Entry) ([]Entry, error) {
+	r := make([]Entry, len(entries))
+	for i, e := range entries {
+		date, err := time.Parse("2006-01-02", e.Date)
+		if err != nil {
+			return nil, errors.New("malformed date")
+		}
+		r[i] = Entry{
+			strongDate:  date,
+			Description: e.Description,
+			Change:      e.Change,
+		}
+	}
+	return r, nil
+}
+
+// sortEntries orders the entries by date, description, cents.
+func sortEntries(entries []Entry) {
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].strongDate.Before(entries[j].strongDate) {
+			return true
+		}
+		if entries[i].strongDate.After(entries[j].strongDate) {
+			return false
+		}
+		if entries[i].Description < entries[j].Description {
+			return true
+		}
+		if entries[i].Description > entries[j].Description {
+			return false
+		}
+		return entries[i].Change < entries[j].Change
+	})
 }
