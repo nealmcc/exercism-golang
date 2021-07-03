@@ -13,21 +13,20 @@ type Entry struct {
 }
 
 func FormatLedger(currency string, locale string, entries []Entry) (string, error) {
-	var entriesCopy []Entry
-	entriesCopy = append(entriesCopy, entries...)
-	if len(entries) == 0 {
-		if _, err := FormatLedger(currency, "en-US", []Entry{{Date: "2014-01-01", Description: "", Change: 0}}); err != nil {
-			// invalid currency requested
-			return "", err
-		}
+	if currency != "EUR" && currency != "USD" {
+		return "", errors.New("invalid currency requested")
 	}
+
+	if locale != "nl-NL" && locale != "en-US" {
+		return "", errors.New("invalid locale requested")
+	}
+
+	header := buildHeader(locale)
+
+	entriesCopy := make([]Entry, 0, len(entries))
+	entriesCopy = append(entriesCopy, entries...)
 
 	sortEntries(entriesCopy)
-
-	header, err := buildHeader(locale)
-	if err != nil {
-		return "", err
-	}
 
 	body, err := buildBody(locale, currency, entriesCopy)
 	if err != nil {
@@ -58,26 +57,17 @@ func sortEntries(es []Entry) {
 	}
 }
 
-func buildHeader(locale string) (string, error) {
-	var header string
-	if locale == "nl-NL" {
-		header = "Datum" +
-			strings.Repeat(" ", 10-len("Datum")) +
-			" | " +
-			"Omschrijving" +
-			strings.Repeat(" ", 25-len("Omschrijving")) +
+func buildHeader(locale string) string {
+	switch locale {
+	case "nl-NL":
+		return "Datum" + strings.Repeat(" ", 10-len("Datum")) +
+			" | " + "Omschrijving" + strings.Repeat(" ", 25-len("Omschrijving")) +
 			" | " + "Verandering" + "\n"
-	} else if locale == "en-US" {
-		header = "Date" +
-			strings.Repeat(" ", 10-len("Date")) +
-			" | " +
-			"Description" +
-			strings.Repeat(" ", 25-len("Description")) +
+	default:
+		return "Date" + strings.Repeat(" ", 10-len("Date")) +
+			" | " + "Description" + strings.Repeat(" ", 25-len("Description")) +
 			" | " + "Change" + "\n"
-	} else {
-		return "", errors.New("invalid locale requested")
 	}
-	return header, nil
 }
 
 func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
@@ -121,10 +111,8 @@ func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
 		if locale == "nl-NL" {
 			if currency == "EUR" {
 				amount += "€"
-			} else if currency == "USD" {
-				amount += "$"
 			} else {
-				return "", errors.New("invalid currency requested")
+				amount += "$"
 			}
 			amount += " "
 			centsStr := strconv.Itoa(cents)
@@ -154,16 +142,14 @@ func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
 			} else {
 				amount += " "
 			}
-		} else if locale == "en-US" {
+		} else {
 			if negative {
 				amount += "("
 			}
 			if currency == "EUR" {
 				amount += "€"
-			} else if currency == "USD" {
-				amount += "$"
 			} else {
-				return "", errors.New("invalid currency requested")
+				amount += "$"
 			}
 			centsStr := strconv.Itoa(cents)
 			switch len(centsStr) {
@@ -192,8 +178,6 @@ func buildBody(locale, currency string, entriesCopy []Entry) (string, error) {
 			} else {
 				amount += " "
 			}
-		} else {
-			return "", errors.New("invalid locale requested")
 		}
 		var al int
 		for range amount {
