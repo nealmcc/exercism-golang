@@ -3,11 +3,51 @@ package ledger
 import (
 	"errors"
 	"fmt"
+	"io"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
+
+// FormatLedger returns the list of entries formatted according to the given
+// currency and locale, with descriptions set to a fixed length
+func FormatLedger(currency, locale string, entries []Entry) (string, error) {
+	currencyOpt, err := WithCurrency(currency)
+	if err != nil {
+		return "", err
+	}
+
+	localeOpt, err := WithLocale(locale)
+	if err != nil {
+		return "", err
+	}
+
+	ledger := New(currencyOpt, localeOpt)
+
+	rows, err := convertEntry(entries)
+	if err != nil {
+		return "", err
+	}
+	sortRows(rows)
+
+	var b strings.Builder
+	ledger.WriteHeader(&b)
+	for _, r := range rows {
+		date := formatDate(locale, r.date)
+		desc := formatDesc(r.description, 25 /* maxLen */)
+		amount := formatAmount(locale, currency, r.cents)
+		fmt.Fprintf(&b, "%-10s | %-25s | %13s\n", date, desc, amount)
+	}
+	return b.String(), nil
+}
+
+// Ledger is a formatting tool which can write a heading
+// and sequence of Entries to a given io.Writer.
+// The formatting of a Ledger is controlled by Options.
+type Ledger struct {
+	options
+}
 
 // Entry is a transaction in the ledger
 type Entry struct {
@@ -16,43 +56,65 @@ type Entry struct {
 	Change      int // in cents
 }
 
-// row is an entry with a strongly-typed date
-type row struct {
-	date        time.Time
-	description string
-	cents       int
+// New creates a new Ledger which will use the given formatting options
+func New(opts ...Option) *Ledger {
+	// defaults:
+	options := options{
+		currencySymbol: "$",
+		dateLayout:     "2006-01-02",
+		negPrefix:      "(",
+		negSuffix:      ")",
+		posPrefix:      "",
+		posSuffix:      "",
+		thousands:      ",",
+		decimal:        ".",
+		terms: map[string]string{
+			"Date":        "Date",
+			"Description": "Description",
+			"Amount":      "Amount",
+		},
+		maxDescription: 25,
+	}
+
+	for _, o := range opts {
+		o.apply(&options)
+	}
+
+	return &Ledger{options}
 }
 
-// FormatLedger returns the list of entries formatted according to the given
-// currency and locale, with descriptions set to a fixed length
-func FormatLedger(currency, locale string, entries []Entry) (string, error) {
-	if currency != "EUR" && currency != "USD" {
-		return "", errors.New("invalid currency requested")
+// WriteHeader writes the header for this ledger to the given writer,
+// with a trailing newline character.
+// Language-specific terminology can be provided when creating a new
+// Ledger by passing in either a WithTerms() Option, or a WithLocale() Option.
+// If multiple such Options are passed in, then the last one is used.
+func (l *Ledger) WriteHeader(w io.Writer) error {
+	format := "%-10s | %-" + strconv.Itoa(l.maxDescription) + "s | %s\n"
+	date, ok := l.terms["Date"]
+	if !ok {
+		date = "Date"
 	}
 
-	if locale != "nl-NL" && locale != "en-US" {
-		return "", errors.New("invalid locale requested")
+	desc, ok := l.terms["Description"]
+	if !ok {
+		desc = "Description"
 	}
 
-	rows, err := parse(entries)
-	if err != nil {
-		return "", err
+	amount, ok := l.terms["Amount"]
+	if !ok {
+		amount = "Amount"
 	}
 
-	sortRows(rows)
-	header := buildHeader(locale)
-	body := buildBody(locale, currency, rows)
-	return header + body, nil
+	_, err := fmt.Fprintf(w, format, date, desc, amount)
+	return err
 }
 
-// parse checks all the incoming entries to make sure the date is formatted
-// correctly, and returns the strongly-typed rows
-func parse(entries []Entry) ([]row, error) {
+func convertEntry(entries []Entry) ([]row, error) {
 	r := make([]row, len(entries))
 	for i, e := range entries {
 		date, err := time.Parse("2006-01-02", e.Date)
 		if err != nil {
-			return nil, errors.New("date format invalid")
+			return nil, errors.New("malformed date")
 		}
 		r[i] = row{
 			date:        date,
@@ -82,48 +144,29 @@ func sortRows(rows []row) {
 	})
 }
 
-func buildHeader(locale string) string {
-	const format string = "%-10s | %-25s | %s\n"
+func formatDate(locale string, d time.Time) string {
 	switch locale {
 	case "nl-NL":
-		return fmt.Sprintf(format, "Datum", "Omschrijving", "Verandering")
-	default:
-		return fmt.Sprintf(format, "Date", "Description", "Change")
-	}
-}
-
-func buildBody(locale, currency string, rows []row) string {
-	var body strings.Builder
-	for _, r := range rows {
-		date := formatDate(locale, r.date)
-		desc := formatDesc(r.description)
-		amount := formatAmount(locale, currency, r.cents)
-		fmt.Fprintf(&body, "%-10s | %-25s | %13s\n", date, desc, amount)
-	}
-	return body.String()
-}
-
-func formatDate(locale string, d time.Time) string {
-	if locale == "nl-NL" {
 		return d.Format("02-01-2006")
-	} else {
+	default:
 		return d.Format("01/02/2006")
 	}
 }
 
-func formatDesc(desc string) string {
-	const max = 25
-	if len(desc) > max {
-		return desc[:max-3] + "..."
+func formatDesc(desc string, maxLen int) string {
+	if len(desc) > maxLen {
+		return desc[:maxLen-3] + "..."
 	}
-	return fmt.Sprintf("%-"+strconv.Itoa(max)+"s", desc)
+	return fmt.Sprintf("%-"+strconv.Itoa(maxLen)+"s", desc)
 }
 
 func formatAmount(locale, currency string, cents int) string {
-	if locale == "nl-NL" {
+	switch locale {
+	case "nl-NL":
 		return amountDutch(cents, currency)
+	default:
+		return amountUSA(cents, currency)
 	}
-	return amountUSA(cents, currency)
 }
 
 func amountDutch(cents int, currency string) string {
@@ -135,7 +178,7 @@ func amountDutch(cents int, currency string) string {
 	writeCurrency(&b, currency)
 	b.WriteByte(' ')
 	whole, cents := cents/100, cents%100
-	fmt.Fprintf(&b, "%s,%02d", separate(whole, '.'), cents)
+	fmt.Fprintf(&b, "%s,%02d", formatThousands(whole, '.'), cents)
 	if negative {
 		b.WriteByte('-')
 	} else {
@@ -155,7 +198,7 @@ func amountUSA(cents int, currency string) string {
 	}
 	writeCurrency(&b, currency)
 	whole, cents := cents/100, cents%100
-	fmt.Fprintf(&b, "%s.%02d", separate(whole, ','), cents)
+	fmt.Fprintf(&b, "%s.%02d", formatThousands(whole, ','), cents)
 	if negative {
 		b.WriteByte(')')
 	} else {
@@ -172,8 +215,8 @@ func writeCurrency(b *strings.Builder, currency string) {
 	}
 }
 
-// separate the given integer using the given thousands separator
-func separate(n int, sep byte) string {
+// formatThousands separates the the given integer using a thousands separator
+func formatThousands(n int, sep byte) string {
 	var b strings.Builder
 	rest := strconv.Itoa(n)
 	parts := make([]string, 0, len(rest)/3+1)
@@ -190,4 +233,11 @@ func separate(n int, sep byte) string {
 	}
 	b.WriteString(parts[0])
 	return b.String()
+}
+
+// row is an entry with a strongly-typed date
+type row struct {
+	date        time.Time
+	description string
+	cents       int
 }
