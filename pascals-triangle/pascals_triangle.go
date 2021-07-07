@@ -1,22 +1,24 @@
 package pascal
 
+var rows []int
+
 // Triangle computes pascal's triangle up to and including the nth row.
 func Triangle(n int) [][]int {
-	var rows = make([][]int, n)
+	r := make([][]int, n)
 	for i := 0; i < n; i++ {
-		rows[i] = makeRow(i + 1)
+		r[i] = Row(i + 1)
 	}
-	return rows
+	return r
 }
 
-// makeRow calculates the nth (1-based) row of Pascal's triangle
+// Row calculates the nth (1-based) row of Pascal's triangle
 // The row is:
 //
 //    n   n(n-1)   n(n-1)(n-2)    n(n-1)(n-2)(n-3)
 // 1, - , ------ , ----------- , ----------------- ...
 //    1     2          2(3)            2(3)(4)
 //
-func makeRow(n int) []int {
+func Row(n int) []int {
 	if n < 1 {
 		return nil
 	}
