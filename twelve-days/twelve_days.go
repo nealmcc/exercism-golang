@@ -2,30 +2,47 @@
 package twelve
 
 import (
+	"bytes"
+	"os"
 	"strings"
 )
 
-var verses = []string{
-	"On the first day of Christmas my true love gave to me: a Partridge in a Pear Tree.",
-	"On the second day of Christmas my true love gave to me: two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the third day of Christmas my true love gave to me: three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the fourth day of Christmas my true love gave to me: four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the fifth day of Christmas my true love gave to me: five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the sixth day of Christmas my true love gave to me: six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the seventh day of Christmas my true love gave to me: seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the eighth day of Christmas my true love gave to me: eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the ninth day of Christmas my true love gave to me: nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the tenth day of Christmas my true love gave to me: ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the eleventh day of Christmas my true love gave to me: eleven Pipers Piping, ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-	"On the twelfth day of Christmas my true love gave to me: twelve Drummers Drumming, eleven Pipers Piping, ten Lords-a-Leaping, nine Ladies Dancing, eight Maids-a-Milking, seven Swans-a-Swimming, six Geese-a-Laying, five Gold Rings, four Calling Birds, three French Hens, two Turtle Doves, and a Partridge in a Pear Tree.",
-}
+const songFile = "twelve-days.txt"
 
-// Song return the full song.
+// Song returns the full song.
 func Song() string {
+	verses, err := readSong(songFile)
+	if err != nil {
+		panic(err)
+	}
 	return strings.Join(verses, "\n")
 }
 
 // Verse returns the requested verse, starting at 1.
 func Verse(n int) string {
+	verses, err := readSong(songFile)
+	if err != nil {
+		panic(err)
+	}
 	return verses[n-1]
+}
+
+// readSong reads the entire file and returns the verses of the song.
+// Each verse in the song must be separated by a blank line.
+// Each verse may be broken down into multiple lines in the file.  If so,
+// this function will join them back together so that the result of this function
+// contains a single string for each verse.
+func readSong(filename string) ([]string, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	data = bytes.TrimSpace(data)
+	verses := bytes.Split(data, []byte{'\n', '\n'})
+	song := make([]string, len(verses))
+	for i, v := range verses {
+		song[i] = string(bytes.ReplaceAll(v, []byte{'\n'}, []byte{' '}))
+	}
+	return song, nil
 }
