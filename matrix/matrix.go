@@ -20,25 +20,25 @@ type Matrix interface {
 	Set(r, c, val int) bool
 }
 
-// matrix is the implementation of a Matrix.
-type matrix struct {
+// Grid is an implementation of a Matrix using a single slice for the cells.
+type Grid struct {
 	numRows int
 	numCols int
 	cells   []int
 }
 
-var _ Matrix = new(matrix)
+var _ Matrix = new(Grid)
 
-// New creates a new matrix.
-func New(in string) (*matrix, error) {
-	m := matrix{
+// New creates a new Grid.
+func New(in string) (*Grid, error) {
+	g := Grid{
 		cells: make([]int, 0, 16),
 	}
 
 	rows := strings.Split(in, "\n")
-	m.numRows = len(rows)
+	g.numRows = len(rows)
 	for r, row := range rows {
-		if len(row) == 0 && m.numCols == 0 {
+		if len(row) == 0 && g.numCols == 0 {
 			continue
 		}
 
@@ -46,8 +46,8 @@ func New(in string) (*matrix, error) {
 		cols := strings.Split(row, " ")
 
 		if r == 0 {
-			m.numCols = len(cols)
-		} else if len(cols) != m.numCols {
+			g.numCols = len(cols)
+		} else if len(cols) != g.numCols {
 			return nil, errors.New("irregular matrix")
 		}
 
@@ -56,34 +56,34 @@ func New(in string) (*matrix, error) {
 			if err != nil {
 				return nil, err
 			}
-			m.cells = append(m.cells, n)
+			g.cells = append(g.cells, n)
 		}
 	}
 
-	return &m, nil
+	return &g, nil
 }
 
 // Rows implements Matrix.Rows.
-func (m *matrix) Rows() [][]int {
-	rows := make([][]int, m.numRows)
+func (g *Grid) Rows() [][]int {
+	rows := make([][]int, g.numRows)
 
-	for i := 0; i < m.numRows; i++ {
-		rows[i] = make([]int, m.numCols)
-		start, end := i*m.numCols, (i+1)*m.numCols
-		copy(rows[i], m.cells[start:end])
+	for i := 0; i < g.numRows; i++ {
+		rows[i] = make([]int, g.numCols)
+		start, end := i*g.numCols, (i+1)*g.numCols
+		copy(rows[i], g.cells[start:end])
 	}
 
 	return rows
 }
 
 // Cols implements Matrix.Cols.
-func (m *matrix) Cols() [][]int {
-	cols := make([][]int, m.numCols)
+func (g *Grid) Cols() [][]int {
+	cols := make([][]int, g.numCols)
 
-	for i := 0; i < m.numCols; i++ {
-		cols[i] = make([]int, m.numRows)
-		for r := 0; r < m.numRows; r++ {
-			cols[i][r] = m.cells[r*m.numCols+i]
+	for i := 0; i < g.numCols; i++ {
+		cols[i] = make([]int, g.numRows)
+		for r := 0; r < g.numRows; r++ {
+			cols[i][r] = g.cells[r*g.numCols+i]
 		}
 	}
 
@@ -91,15 +91,15 @@ func (m *matrix) Cols() [][]int {
 }
 
 // Set implements Matrix.Set.
-func (m *matrix) Set(r, c, val int) bool {
-	if r < 0 || r >= m.numRows {
+func (g *Grid) Set(r, c, val int) bool {
+	if r < 0 || r >= g.numRows {
 		return false
 	}
 
-	if c < 0 || c >= m.numCols {
+	if c < 0 || c >= g.numCols {
 		return false
 	}
 
-	m.cells[r*m.numCols+c] = val
+	g.cells[r*g.numCols+c] = val
 	return true
 }
