@@ -136,8 +136,8 @@ var tests = []struct {
 	{"2.7", false, nil, nil},                 // non-int
 	{"cat", false, nil, nil},                 // non-numeric
 	// undefined
-	// {"\n\n", // valid?, 3 rows, 0 columns
-	// {"",     // valid?, 0 rows, 0 columns
+	{"\n\n", true, nil, nil}, // valid?, 3 rows, 0 columns
+	{"", true, nil, nil},     // valid?, 0 rows, 0 columns
 }
 
 func TestNew(t *testing.T) {

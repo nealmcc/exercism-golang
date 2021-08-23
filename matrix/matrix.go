@@ -3,42 +3,23 @@ package matrix
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
 
-// Matrix is the interface for a matrix of integers.
-type Matrix interface {
+// Matrix is a regular two-dimensional array of integers.
+type Matrix [][]int
 
-	// Rows returns a slice of all the rows in the matrix.
-	Rows() [][]int
-
-	// Cols returns a slice of all the columns in the matrix.
-	Cols() [][]int
-
-	// Set the value of a cell in the matrix.
-	Set(r, c, val int) bool
-}
-
-// Grid is an implementation of a Matrix using a single slice for the cells.
-type Grid struct {
-	numRows int
-	numCols int
-	cells   []int
-}
-
-var _ Matrix = new(Grid)
-
-// New creates a new Grid.
-func New(in string) (*Grid, error) {
-	g := Grid{
-		cells: make([]int, 0, 16),
-	}
+// New creates a new Matrix.
+// If the input contains no cells, the Matrix will be an empty (valid) matrix.
+func New(in string) (Matrix, error) {
+	m := make([][]int, 0, 4)
 
 	rows := strings.Split(in, "\n")
-	g.numRows = len(rows)
+	numCols := 0
 	for r, row := range rows {
-		if len(row) == 0 && g.numCols == 0 {
+		if len(row) == 0 && numCols == 0 {
 			continue
 		}
 
@@ -46,60 +27,84 @@ func New(in string) (*Grid, error) {
 		cols := strings.Split(row, " ")
 
 		if r == 0 {
-			g.numCols = len(cols)
-		} else if len(cols) != g.numCols {
+			numCols = len(cols)
+		} else if len(cols) != numCols {
 			return nil, errors.New("irregular matrix")
 		}
+
+		cells := make([]int, 0, 4)
 
 		for _, alpha := range cols {
 			n, err := strconv.Atoi(alpha)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("a matrix only supports integers: %w", err)
 			}
-			g.cells = append(g.cells, n)
+			cells = append(cells, n)
 		}
+		m = append(m, cells)
 	}
 
-	return &g, nil
+	return m, nil
 }
 
-// Rows implements Matrix.Rows.
-func (g *Grid) Rows() [][]int {
-	rows := make([][]int, g.numRows)
+// Rows returns the rows of the matrix
+func (m Matrix) Rows() [][]int {
+	numRows, numCols := m.Size()
+	if numRows == 0 {
+		return nil
+	}
 
-	for i := 0; i < g.numRows; i++ {
-		rows[i] = make([]int, g.numCols)
-		start, end := i*g.numCols, (i+1)*g.numCols
-		copy(rows[i], g.cells[start:end])
+	rows := make([][]int, numRows)
+
+	for r := 0; r < numRows; r++ {
+		rows[r] = make([]int, numCols)
+		copy(rows[r], m[r])
 	}
 
 	return rows
 }
 
-// Cols implements Matrix.Cols.
-func (g *Grid) Cols() [][]int {
-	cols := make([][]int, g.numCols)
+// Cols returns the columns of the matrix.
+func (m Matrix) Cols() [][]int {
+	numRows, numCols := m.Size()
+	if numCols == 0 {
+		return nil
+	}
 
-	for i := 0; i < g.numCols; i++ {
-		cols[i] = make([]int, g.numRows)
-		for r := 0; r < g.numRows; r++ {
-			cols[i][r] = g.cells[r*g.numCols+i]
+	cols := make([][]int, numCols)
+
+	for c := 0; c < numCols; c++ {
+		cols[c] = make([]int, numRows)
+		for r := 0; r < numRows; r++ {
+			cols[c][r] = m[r][c]
 		}
 	}
 
 	return cols
 }
 
-// Set implements Matrix.Set.
-func (g *Grid) Set(r, c, val int) bool {
-	if r < 0 || r >= g.numRows {
+// Set attempts to set the given row and column.  Returns true if successful.
+func (m Matrix) Set(r, c, val int) bool {
+	numRows, numCols := m.Size()
+
+	if r < 0 || r >= numRows {
 		return false
 	}
 
-	if c < 0 || c >= g.numCols {
+	if c < 0 || c >= numCols {
 		return false
 	}
 
-	g.cells[r*g.numCols+c] = val
+	m[r][c] = val
 	return true
+}
+
+// Size returns the number of rows and columns in the matrix.
+func (m Matrix) Size() (rows int, cols int) {
+	rows = len(m)
+	if rows == 0 {
+		return
+	}
+	cols = len(m[0])
+	return
 }
