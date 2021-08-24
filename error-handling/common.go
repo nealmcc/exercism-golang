@@ -16,8 +16,14 @@ type TransientError struct {
 	err error
 }
 
+// Error implements the error interface.
 func (e TransientError) Error() string {
 	return e.err.Error()
+}
+
+// IsTransient implements the Transient interface.
+func (e TransientError) IsTransient() bool {
+	return true
 }
 
 // FrobError is a possible error from doing some frobbing, your implementation
@@ -29,6 +35,7 @@ type FrobError struct {
 	inner     error
 }
 
+// Error implements the error interface.
 func (e FrobError) Error() string {
 	return e.inner.Error()
 }
