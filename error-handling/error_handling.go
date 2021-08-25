@@ -53,22 +53,18 @@ func open(o ResourceOpener, maxTries int, wait time.Duration) (r Resource, err e
 	for n := 0; n < maxTries; n, wait = n+1, wait*2 {
 		r, err = o()
 		if err == nil {
-			break
+			return
 		}
 
-		if isTransient(err) {
-			log.Printf("transient error %s ; retrying in %v\n", err, wait)
-			time.Sleep(wait)
-			continue
+		if !isTransient(err) {
+			return
 		}
 
-		return nil, err
+		log.Printf("transient error %s ; retrying in %v\n", err, wait)
+		time.Sleep(wait)
 	}
-	if err != nil {
-		return nil, fmt.Errorf("tried opening resource %d times; last error: %w",
-			maxTries, err)
-	}
-	return r, nil
+	return nil, fmt.Errorf("tried opening resource %d times; last error: %w",
+		maxTries, err)
 }
 
 // isTransient returns true if err, or any error it wraps is transient.
