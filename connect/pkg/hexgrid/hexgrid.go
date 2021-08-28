@@ -12,7 +12,7 @@ import "math"
 // Vector is the 2d coordinate of the center of a hexagonal tile on a grid.
 // The distance between the center points of tiles is defined to be 1 unit.
 type Vector struct {
-	x, y float64
+	X, Y float64
 }
 
 // Vkey is a vector expressed in a form suitable for the key in a hashtable.
@@ -20,7 +20,7 @@ type Vector struct {
 // y is a multiple of sin60
 // Note that it is not valid to have x even and y odd or vice versa.
 type Vkey struct {
-	x, y int
+	X, Y int
 }
 
 // E, W, NE, NW, SE, and SW are the defined keys to navigate
@@ -54,15 +54,15 @@ var (
 
 // ToKey rounds this vector to its nearest discrete (Vkey) representation.
 func (v Vector) ToKey(dia float64) Vkey {
-	x := int(math.Round(v.x / cos60))
-	y := int(math.Round(v.y / sin60))
+	x := int(math.Round(v.X / cos60))
+	y := int(math.Round(v.Y / sin60))
 	return Vkey{x, y}
 }
 
 // ToVector converts this Vkey to its floating point (Vector) representation.
 func (k Vkey) ToVector() Vector {
-	x := float64(k.x) * cos60
-	y := float64(k.y) * sin60
+	x := float64(k.X) * cos60
+	y := float64(k.Y) * sin60
 	return Vector{x, y}
 }
 
@@ -82,33 +82,33 @@ func (k Vkey) Adjacent() []Vkey {
 func (k Vkey) Sum(keys ...Vkey) Vkey {
 	sum := k
 	for _, v := range keys {
-		sum.x += v.x
-		sum.y += v.y
+		sum.X += v.X
+		sum.Y += v.Y
 	}
 	return sum
 }
 
 // Size measures the length of a Vector.
 func (a Vector) Size() float64 {
-	x2 := math.Pow(a.x, 2)
-	y2 := math.Pow(a.y, 2)
+	x2 := math.Pow(a.X, 2)
+	y2 := math.Pow(a.Y, 2)
 	return math.Sqrt(x2 + y2)
 }
 
 // Dist measures the distance between this Vector and the other one.
 func (a Vector) Dist(b Vector) float64 {
-	x2 := math.Pow(a.x-b.x, 2)
-	y2 := math.Pow(a.y-b.y, 2)
+	x2 := math.Pow(a.X-b.X, 2)
+	y2 := math.Pow(a.Y-b.Y, 2)
 	return math.Sqrt(x2 + y2)
 }
 
 // Scale multiplies a vector by the given scalar value, returning a new Vector
 func (a Vector) Scale(sc float64) Vector {
-	return Vector{a.x * sc, a.y * sc}
+	return Vector{a.X * sc, a.Y * sc}
 }
 
 // IsClose will return true iff both the x and y values are within 1e-15.
 func (a Vector) IsClose(b Vector) bool {
 	delta := 1e-15
-	return math.Abs(a.x-b.x) < delta && math.Abs(a.y-b.y) < delta
+	return math.Abs(a.X-b.X) < delta && math.Abs(a.Y-b.Y) < delta
 }
