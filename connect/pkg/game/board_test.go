@@ -24,27 +24,32 @@ func TestAdjacent(t *testing.T) {
 			b:    tiny,
 			keys: [2]hg.Vkey{{}, tiny.top},
 			want: true,
-		}, {
+		},
+		{
 			name: "tiny(1): center, right",
 			b:    tiny,
 			keys: [2]hg.Vkey{{}, tiny.right},
 			want: true,
-		}, {
+		},
+		{
 			name: "tiny(1): center, bottom",
 			b:    tiny,
 			keys: [2]hg.Vkey{{}, tiny.bottom},
 			want: true,
-		}, {
+		},
+		{
 			name: "tiny(1): center, left",
 			b:    tiny,
 			keys: [2]hg.Vkey{{}, tiny.left},
 			want: true,
-		}, {
+		},
+		{
 			name: "tiny(1): left right",
 			b:    tiny,
 			keys: [2]hg.Vkey{tiny.left, tiny.right},
 			want: false,
-		}, {
+		},
+		{
 			name: "tiny(1): top bottom",
 			b:    tiny,
 			keys: [2]hg.Vkey{tiny.top, tiny.bottom},
@@ -56,7 +61,8 @@ func TestAdjacent(t *testing.T) {
 			b:    little,
 			keys: [2]hg.Vkey{{}, little.top},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): top 2",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 2, Y: 0}, little.top},
@@ -67,7 +73,8 @@ func TestAdjacent(t *testing.T) {
 			b:    little,
 			keys: [2]hg.Vkey{{X: 2, Y: 0}, little.right},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): right 2",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 3, Y: 1}, little.right},
@@ -78,7 +85,8 @@ func TestAdjacent(t *testing.T) {
 			b:    little,
 			keys: [2]hg.Vkey{{X: 1, Y: 1}, little.bottom},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): bottom 2",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 3, Y: 1}, little.bottom},
@@ -89,7 +97,8 @@ func TestAdjacent(t *testing.T) {
 			b:    little,
 			keys: [2]hg.Vkey{{}, little.left},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): left 2",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 1, Y: 1}, little.left},
@@ -100,27 +109,32 @@ func TestAdjacent(t *testing.T) {
 			b:    little,
 			keys: [2]hg.Vkey{{}, {X: 2, Y: 0}},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): 2,0 3,1",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 2, Y: 0}, {X: 3, Y: 1}},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): 3,1 1,1",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 3, Y: 1}, {X: 1, Y: 1}},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): 1,1 0,0",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 1, Y: 1}, {}},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): 1,1 2,0",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 1, Y: 1}, {X: 2, Y: 0}},
 			want: true,
-		}, {
+		},
+		{
 			name: "little(2): 0,0 3,1",
 			b:    little,
 			keys: [2]hg.Vkey{{X: 0, Y: 0}, {X: 3, Y: 1}},

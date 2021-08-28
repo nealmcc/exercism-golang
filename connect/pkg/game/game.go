@@ -44,9 +44,9 @@ type player struct {
 type shape int
 
 const (
-	none   shape = iota // none is an empty space
-	shapeX              // shapeX is an "X"
-	shapeO              // shapeO is an "O"
+	none shape = iota
+	shapeX
+	shapeO
 )
 
 // Game is a game of Hex.

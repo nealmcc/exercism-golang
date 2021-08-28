@@ -15,9 +15,9 @@ type Vector struct {
 }
 
 // Size returns the length of the receiver.
-func (a Vector) Size() float64 {
-	x2 := math.Pow(a.X, 2)
-	y2 := math.Pow(a.Y, 2)
+func (v Vector) Size() float64 {
+	x2 := math.Pow(v.X, 2)
+	y2 := math.Pow(v.Y, 2)
 	return math.Sqrt(x2 + y2)
 }
 
