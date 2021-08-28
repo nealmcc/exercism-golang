@@ -22,9 +22,9 @@ func TestPush(t *testing.T) {
 		},
 		{
 			name:  "non-empty stack, push once",
-			start: stack{hexgrid.E},
-			add:   hexgrid.W,
-			want:  stack{hexgrid.E, hexgrid.W},
+			start: stack{hexgrid.East},
+			add:   hexgrid.West,
+			want:  stack{hexgrid.East, hexgrid.West},
 		},
 	}
 

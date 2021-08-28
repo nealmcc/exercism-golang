@@ -2,7 +2,7 @@ package game
 
 import "connect/pkg/hexgrid"
 
-// stack is a stack data structure where each element is an hexgrid.Vkey.
+// stack is a stack of hexgrid.Vkey.
 type stack []hexgrid.Vkey
 
 // push an element on to the top of the stack.
