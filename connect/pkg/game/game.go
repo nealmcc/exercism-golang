@@ -25,8 +25,8 @@ func New(input []string) (*Game, error) {
 	}
 
 	return &Game{
-		p1:    player{name: "x", shape: shapeX},
-		p2:    player{name: "o", shape: shapeO},
+		p1:    player{name: "X", shape: shapeX},
+		p2:    player{name: "O", shape: shapeO},
 		board: b,
 	}, nil
 }

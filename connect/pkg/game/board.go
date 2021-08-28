@@ -93,14 +93,34 @@ func parseBoard(lines []string) (board, error) {
 	return b, nil
 }
 
-// hasConnection determines if there is a path between k1 and k2 (inclusive)
+// hasConnection determines if there is a path between start and end (inclusive)
 // where every tile has the given shape.
-func (b board) hasConnection(sh shape, from, to hg.Vkey) bool {
-	if b.grid[from] != sh || b.grid[to] != sh {
+func (b board) hasConnection(symbol shape, start, end hg.Vkey) bool {
+	if b.grid[start] != symbol || b.grid[end] != symbol {
 		return false
 	}
 
-	// visited := map[hexgrid.Vkey]bool{}
+	// depth-first search. If we find the end then we're done.
+	visited := make(map[hg.Vkey]bool)
+	visited[start] = true
+
+	work := stack{}
+	work.push(start)
+
+	for len(work) > 0 {
+		tile, _ := work.pop()
+		for _, next := range tile.Neighbours() {
+			if next == end {
+				return true
+			}
+
+			if b.grid[next] != symbol || visited[next] || !b.areAdjacent(tile, next) {
+				continue
+			}
+			visited[next] = true
+			work.push(next)
+		}
+	}
 
 	return false
 }
@@ -128,7 +148,7 @@ func (b board) areAdjacent(k1, k2 hg.Vkey) bool {
 	return false
 }
 
-// contains checks to see if the given key is within the bounds of the board.
+// contains returns true iff the given key is within the bounds of the board.
 func (b board) contains(k hg.Vkey) bool {
 	// left edge:
 	if k.X < k.Y {

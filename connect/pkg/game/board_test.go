@@ -6,7 +6,7 @@ import (
 	hg "connect/pkg/hexgrid"
 )
 
-func TestAdjacent(t *testing.T) {
+func TestAreAdjacent(t *testing.T) {
 	var (
 		tiny   board = newBoard(1)
 		little board = newBoard(2)
@@ -158,5 +158,95 @@ func assertAdjacent(t *testing.T, b board, k1, k2 hg.Vkey, want bool) {
 	if got := b.areAdjacent(k1, k2); got != want {
 		t.Logf("areAdjacent(%+v, %+v) = %v ; want %v", k1, k2, got, want)
 		t.Fail()
+	}
+}
+
+func TestHasConnection(t *testing.T) {
+	/*
+		X O O
+		 O X O
+		  O X X
+	*/
+	b, err := parseBoard([]string{
+		"XOO",
+		"OXO",
+		"OXX",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	tt := []struct {
+		name  string
+		shape shape
+		start hg.Vkey
+		end   hg.Vkey
+		want  bool
+	}{
+		{
+			name:  "adjacent, no shape -> false",
+			shape: shapeX,
+			start: hg.Vkey{X: 1, Y: 1},
+			end:   hg.Vkey{X: 2, Y: 0},
+			want:  false,
+		},
+		{
+			name:  "disconnected, same shape -> false",
+			shape: shapeX,
+			start: hg.Vkey{},
+			end:   hg.Vkey{X: 3, Y: 1},
+			want:  false,
+		},
+		{
+			name:  "same shape, adjacent -> true",
+			shape: shapeX,
+			start: hg.Vkey{X: 3, Y: 1},
+			end:   hg.Vkey{X: 4, Y: 2},
+			want:  true,
+		},
+		{
+			name:  "same shape, distance 2 -> true",
+			shape: shapeX,
+			start: hg.Vkey{X: 3, Y: 1},
+			end:   hg.Vkey{X: 6, Y: 2},
+			want:  true,
+		},
+		{
+			name:  "same shape, distance 2 -> true",
+			shape: shapeX,
+			start: hg.Vkey{X: 3, Y: 1},
+			end:   hg.Vkey{X: 6, Y: 2},
+			want:  true,
+		}, {
+			name:  "same shape, long path -> true",
+			shape: shapeO,
+			start: hg.Vkey{X: 2, Y: 2},
+			end:   hg.Vkey{X: 5, Y: 1},
+			want:  true,
+		}, {
+			name:  "left to right, multiple paths -> true",
+			shape: shapeO,
+			start: b.left,
+			end:   b.right,
+			want:  true,
+		},
+	}
+
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := b.hasConnection(tc.shape, tc.start, tc.end)
+			if got != tc.want {
+				t.Logf("got = %v ; want %v", got, tc.want)
+				t.Fail()
+			}
+			// test in reverse
+			got = b.hasConnection(tc.shape, tc.end, tc.start)
+			if got != tc.want {
+				t.Logf("got = %v ; want %v", got, tc.want)
+				t.Fail()
+			}
+		})
 	}
 }
