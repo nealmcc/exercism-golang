@@ -1,4 +1,6 @@
 // Package hexgrid implements a hexagonal tile system in two dimensions.
+// Y increases moving South, and decreases moving North.
+// X increases moving East, and decreases moving West.
 // Tiles can be arranged along three axes:
 // E  - W
 // NE - SW
@@ -60,10 +62,10 @@ type Vkey struct {
 var (
 	East Vkey = Vkey{2, 0}
 	West Vkey = Vkey{-2, 0}
-	NE   Vkey = Vkey{1, 1}
-	NW   Vkey = Vkey{-1, 1}
-	SE   Vkey = Vkey{1, -1}
-	SW   Vkey = Vkey{-1, -1}
+	NE   Vkey = Vkey{1, -1}
+	NW   Vkey = Vkey{-1, -1}
+	SE   Vkey = Vkey{1, 1}
+	SW   Vkey = Vkey{-1, 1}
 )
 
 // Sum returns the sum of all the given keys.
