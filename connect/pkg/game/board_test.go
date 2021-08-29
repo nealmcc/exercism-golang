@@ -161,7 +161,7 @@ func assertAdjacent(t *testing.T, b board, k1, k2 hex.Vkey, want bool) {
 	}
 }
 
-func TestHasConnection(t *testing.T) {
+func TestCanConnect(t *testing.T) {
 	b, err := parseBoard([]string{
 		"OXX.", // O X X .
 		"OOXX", //  O O X X

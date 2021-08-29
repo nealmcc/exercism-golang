@@ -55,7 +55,7 @@ func newBoard(size int) board {
 
 // parseBoard reads a text representation of the board.
 //
-// 'X' and 'O' are used to represent shapeX and shapeO.
+// 'X' and 'O' are the shapes used by playerLeft and playerTop, respectively.
 // '.' is an empty tile.
 //
 // parseBoard will return an error if the input is empty, not square,

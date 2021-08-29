@@ -1,4 +1,5 @@
 // Package game implements a gameboard for Hex.
+// 'X' plays left to right and "O" plays top to bottom.
 package game
 
 // New initialises a game using the given board input.
@@ -16,8 +17,6 @@ package game
 //  XOO        X O O
 //  OX.    ->   O X .
 //  .X.          . X .
-//
-// 'X' plays left to right and "O" plays top to bottom.
 func New(input []string) (*Game, error) {
 	b, err := parseBoard(input)
 	if err != nil {
