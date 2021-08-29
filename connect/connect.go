@@ -7,8 +7,8 @@ import (
 	"connect/pkg/game"
 )
 
-// ResultOf evaluates a gameboard and determines if player "x"
-// or player "o" has won the game.
+// ResultOf evaluates a gameboard and determines if player "X"
+// or player "O" has won the game.
 func ResultOf(lines []string) (string, error) {
 	g, err := game.New(lines)
 	if err != nil {

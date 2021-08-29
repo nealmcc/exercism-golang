@@ -17,18 +17,18 @@ package game
 //  OX.    ->   O X .
 //  .X.          . X .
 //
-// 'X' plays top to bottom and "O" plays left to right.
+// 'X' plays left to right and "O" plays top to bottom.
 func New(input []string) (*Game, error) {
 	b, err := parseBoard(input)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Game{
-		p1:    player{name: "X", shape: shapeX},
-		p2:    player{name: "O", shape: shapeO},
-		board: b,
-	}, nil
+	g := Game{board: b}
+	g.setLeft(player{name: "X", shape: shapeX})
+	g.setTop(player{name: "O", shape: shapeO})
+
+	return &g, nil
 }
 
 // player is one of the two players.  Each player will be either X's or O's.
@@ -51,19 +51,33 @@ const (
 
 // Game is a game of Hex.
 type Game struct {
-	p1    player
-	p2    player
-	board board
+	playerLeft player
+	playerTop  player
+	board      board
+}
+
+func (g *Game) setLeft(p player) {
+	(*g).playerLeft = p
+	b := g.board
+	b.tiles[b.left] = p.shape
+	b.tiles[b.right] = p.shape
+}
+
+func (g *Game) setTop(p player) {
+	(*g).playerTop = p
+	b := g.board
+	b.tiles[b.top] = p.shape
+	b.tiles[b.bottom] = p.shape
 }
 
 // Winner returns the name of winning player.
 // Returns false iff neither player has won.
 func (g Game) Winner() (string, bool) {
-	if g.board.hasConnection(shapeX, g.board.top, g.board.bottom) {
-		return g.p1.name, true
+	if g.board.canConnect(g.playerLeft.shape, g.board.left, g.board.right) {
+		return g.playerLeft.name, true
 	}
-	if g.board.hasConnection(shapeO, g.board.left, g.board.right) {
-		return g.p2.name, true
+	if g.board.canConnect(g.playerTop.shape, g.board.top, g.board.bottom) {
+		return g.playerTop.name, true
 	}
 	return "", false
 }

@@ -1,4 +1,4 @@
-package hexgrid
+package hex
 
 import (
 	"math"

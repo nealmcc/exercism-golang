@@ -1,11 +1,11 @@
-// Package hexgrid implements a hexagonal tile system in two dimensions.
+// Package hex implements a hexagonal tile system in two dimensions.
 // Y increases moving South, and decreases moving North.
 // X increases moving East, and decreases moving West.
 // Tiles can be arranged along three axes:
 // E  - W
 // NE - SW
 // NW - SE
-package hexgrid
+package hex
 
 import "math"
 
@@ -27,23 +27,6 @@ func Dist(a, b Vector) float64 {
 	y2 := math.Pow(a.Y-b.Y, 2)
 	return math.Sqrt(x2 + y2)
 }
-
-// Scale multiplies a vector by the given scalar value, returning a new Vector
-func Scale(a Vector, sc float64) Vector {
-	return Vector{a.X * sc, a.Y * sc}
-}
-
-// ToKey rounds the receiver to its nearest discrete key.
-func (v Vector) ToKey() Vkey {
-	x := int(math.Round(v.X / cos60))
-	y := int(math.Round(v.Y / sin60))
-	return Vkey{x, y}
-}
-
-var (
-	sin60 float64 = math.Sqrt(3) / 2
-	cos60         = 0.5
-)
 
 // Vkey is the logical identifier for a tile on a hexagonal grid where
 // the distance between the center points of adjacent tiles is 1 unit.
@@ -78,6 +61,11 @@ func Sum(keys ...Vkey) Vkey {
 	return sum
 }
 
+// Plus returns the sum of k and k2.
+func (k Vkey) Plus(k2 Vkey) Vkey {
+	return Sum(k, k2)
+}
+
 // Times returns k * n.
 func (k Vkey) Times(n int) Vkey {
 	return Vkey{
@@ -100,6 +88,11 @@ func (k Vkey) Neighbours() []Vkey {
 
 // ToVector converts the receiver to its floating point representation.
 func (k Vkey) ToVector() Vector {
+	var (
+		sin60 float64 = math.Sqrt(3) / 2
+		cos60         = 0.5
+	)
+
 	x := float64(k.X) * cos60
 	y := float64(k.Y) * sin60
 	return Vector{x, y}

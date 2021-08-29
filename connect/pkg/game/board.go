@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	hg "connect/pkg/hexgrid"
+	"connect/pkg/hex"
 )
 
 // board is a Hex gameboard, with the top left corner at position (0, 0).
@@ -27,32 +27,33 @@ import (
 //
 // The bottom right corner is at position 4*SE + 4*East = (12, 4).
 type board struct {
-	size   int
-	grid   map[hg.Vkey]shape
-	top    hg.Vkey // top edge
-	right  hg.Vkey // right edge
-	bottom hg.Vkey // bottom edge
-	left   hg.Vkey // left edge
+	size   int                // boards have equal width and height for fair play
+	top    hex.Vkey           // nominal top edge
+	right  hex.Vkey           // nominal right edge
+	bottom hex.Vkey           // nominal bottom edge
+	left   hex.Vkey           // nominal left edge
+	tiles  map[hex.Vkey]shape // all tiles which have a shape. Includes edges.
 }
 
+// newBoard initializes a new, empty board of the given size.
 func newBoard(size int) board {
 	b := board{
 		size:   size,
-		top:    hg.NE,
-		right:  hg.East.Times(size),
-		bottom: hg.SE.Times(size),
-		left:   hg.SW,
-		grid:   make(map[hg.Vkey]shape, 4),
+		top:    hex.NE,
+		right:  hex.East.Times(size),
+		bottom: hex.SE.Times(size),
+		left:   hex.SW,
+		tiles:  make(map[hex.Vkey]shape, 4),
 	}
 	// place the appropriate shape on each edge of the board:
-	b.grid[b.top] = shapeX
-	b.grid[b.right] = shapeO
-	b.grid[b.bottom] = shapeX
-	b.grid[b.left] = shapeO
+	b.tiles[b.top] = shapeO
+	b.tiles[b.right] = shapeX
+	b.tiles[b.bottom] = shapeO
+	b.tiles[b.left] = shapeX
 	return b
 }
 
-// parseBoard reads a text representation of the board in standard form.
+// parseBoard reads a text representation of the board.
 //
 // 'X' and 'O' are used to represent shapeX and shapeO.
 // '.' is an empty tile.
@@ -65,105 +66,177 @@ func parseBoard(lines []string) (board, error) {
 		return board{}, errors.New("a board must have at least 1 tile")
 	}
 
-	if size != len(lines[0]) {
-		return board{}, errors.New("a board in standard form must be square")
-	}
-
 	b := newBoard(size)
 
 	for y, row := range lines {
-		key := hg.Vkey{
-			X: y,
-			Y: y,
+		if len(row) != size {
+			return board{}, errors.New("a board must be a regular rhombus")
 		}
+		key := hex.SE.Times(y)
 		for _, symbol := range []byte(row) {
 			switch symbol {
 			case 'X':
-				b.grid[key] = shapeX
+				b.tiles[key] = shapeX
 			case 'O':
-				b.grid[key] = shapeO
+				b.tiles[key] = shapeO
 			case '.':
 			default:
 				return board{}, fmt.Errorf("invalid symbol: %q", symbol)
 			}
-			key = hg.Sum(key, hg.East)
+			key = key.Plus(hex.East)
 		}
 	}
 
 	return b, nil
 }
 
-// hasConnection determines if there is a path between start and end (inclusive)
+// canConnect determines if there is a path between start and end (inclusive)
 // where every tile has the given shape.
-func (b board) hasConnection(symbol shape, start, end hg.Vkey) bool {
-	if b.grid[start] != symbol || b.grid[end] != symbol {
+func (b board) canConnect(symbol shape, start, end hex.Vkey) bool {
+	if symbol == none || b.tiles[start] != symbol || b.tiles[end] != symbol {
 		return false
 	}
 
-	// depth-first search. If we find the end then we're done.
-	visited := make(map[hg.Vkey]bool)
-	visited[start] = true
+	type visits = map[hex.Vkey]bool
 
-	work := stack{}
-	work.push(start)
+	// depth-first search.
+	work := stack{{start, visits{start: true}}}
 
 	for len(work) > 0 {
-		tile, _ := work.pop()
-		for _, next := range tile.Neighbours() {
+		tile, visited, _ := work.pop()
+		for _, next := range b.children(tile) {
 			if next == end {
 				return true
 			}
 
-			if b.grid[next] != symbol || visited[next] || !b.areAdjacent(tile, next) {
+			if visited[next] {
 				continue
 			}
+
 			visited[next] = true
-			work.push(next)
+			work.push(next, visited)
 		}
 	}
 
 	return false
+}
+
+// children returns a slice of tiles that have the same shape as k,
+// and are adjacent to it.
+func (b board) children(k hex.Vkey) []hex.Vkey {
+	match := b.tiles[k]
+	if match == none {
+		return nil
+	}
+
+	children := make([]hex.Vkey, 0, 3)
+	for k2, shape := range b.tiles {
+		if shape == match && b.areAdjacent(k, k2) {
+			children = append(children, k2)
+		}
+	}
+	return children
 }
 
 // areAdjacent tests to see if k1 and k2 are adjacent to one another.
 // If neither tile is on the board, they are not adjacent.
 // If one tile is not on the board, it must be an edge.
 // Edges are not adjacent to each other.
-func (b board) areAdjacent(k1, k2 hg.Vkey) bool {
-	if !b.contains(k1) {
-		k1, k2 = k2, k1
-	}
-
-	if !b.contains(k1) {
+func (b board) areAdjacent(k1, k2 hex.Vkey) bool {
+	if !b.allValid(k1, k2) {
 		return false
 	}
 
-	// k1 is on the board.
-	for _, n := range k1.Neighbours() {
-		if n == k2 {
-			return true
-		}
+	// both k1 and k2 are either internal or an edge
+
+	if b.isEdge(k1) {
+		k1, k2 = k2, k1
 	}
 
+	if b.isEdge(k1) {
+		return false
+	}
+
+	// k1 is internal. k2 is either an edge or internal.
+
+	switch k2 {
+	case b.top:
+		for n := 0; n < b.size; n++ {
+			if k1 == hex.East.Times(n) {
+				return true
+			}
+		}
+
+	case b.right:
+		for n := 0; n < b.size; n++ {
+			if k1 == hex.East.Times(b.size-1).Plus(hex.SE.Times(n)) {
+				return true
+			}
+		}
+
+	case b.bottom:
+		for n := 0; n < b.size; n++ {
+			if k1 == hex.SE.Times(b.size-1).Plus(hex.East.Times(n)) {
+				return true
+			}
+		}
+
+	case b.left:
+		for n := 0; n < b.size; n++ {
+			if k1 == hex.SE.Times(n) {
+				return true
+			}
+		}
+
+	default:
+		// k1 and k2 are both internal.
+		for _, n := range k1.Neighbours() {
+			if n == k2 {
+				return true
+			}
+		}
+	}
 	return false
 }
 
-// contains returns true iff the given key is within the bounds of the board.
-func (b board) contains(k hg.Vkey) bool {
-	// left edge:
+// allValid returns true if all of the given tiles are either on the receiver's
+// board, or are one of its four edges.
+func (b board) allValid(keys ...hex.Vkey) bool {
+	for _, k := range keys {
+		if !b.isInternal(k) && !b.isEdge(k) {
+			return false
+		}
+	}
+	return true
+}
+
+// isInternal returns true iff the given key is within the bounds of the
+// receiver's board.
+func (b board) isInternal(k hex.Vkey) bool {
+	// left edge or beyond:
 	if k.X < k.Y {
 		return false
 	}
 
-	// right edge:
+	// right edge or beyond:
 	if k.X >= k.Y+2*b.size {
 		return false
 	}
 
-	// top and bottom edges:
+	// top and bottom edges or beyond:
 	if k.Y < 0 || k.Y >= b.size {
 		return false
 	}
 
 	return true
+}
+
+// isEdge returns true iff k is one of the four edges of the receiver.
+func (b board) isEdge(k hex.Vkey) bool {
+	switch k {
+	case b.top, b.right, b.bottom, b.left:
+		return true
+	default:
+		return false
+	}
 }

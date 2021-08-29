@@ -1,8 +1,9 @@
 package game
 
 import (
-	"connect/pkg/hexgrid"
 	"testing"
+
+	"connect/pkg/hex"
 )
 
 func TestPush(t *testing.T) {
@@ -11,20 +12,20 @@ func TestPush(t *testing.T) {
 	tt := []struct {
 		name  string
 		start stack
-		add   hexgrid.Vkey
-		want  stack
+		add   hex.Vkey
+		want  int
 	}{
 		{
 			name:  "empty stack, push once",
 			start: stack{},
-			add:   hexgrid.NE,
-			want:  stack{hexgrid.NE},
+			add:   hex.NE,
+			want:  1,
 		},
 		{
 			name:  "non-empty stack, push once",
-			start: stack{hexgrid.East},
-			add:   hexgrid.West,
-			want:  stack{hexgrid.East, hexgrid.West},
+			start: stack{stackitem{tile: hex.East}},
+			add:   hex.West,
+			want:  2,
 		},
 	}
 
@@ -34,17 +35,11 @@ func TestPush(t *testing.T) {
 			t.Parallel()
 
 			s := tc.start
-			s.push(tc.add)
+			s.push(tc.add, nil)
 
-			if len(s) != len(tc.want) {
-				t.Fatalf("push() got len %d ; want %d", len(s), len(tc.want))
-			}
-
-			for i, val := range s {
-				if tc.want[i] != val {
-					t.Logf("got stack[%d] = %v ; want %v", i, val, tc.want[i])
-					t.Fail()
-				}
+			if len(s) != tc.want {
+				t.Logf("got length %d ; want %d", len(s), tc.want)
+				t.Fail()
 			}
 		})
 	}
@@ -52,16 +47,16 @@ func TestPush(t *testing.T) {
 
 func TestPop(t *testing.T) {
 	tt := []struct {
-		name   string
-		start  stack
-		n      int
-		want   hexgrid.Vkey
-		wantOK bool
-		after  stack
+		name    string
+		start   stack
+		count   int
+		want    hex.Vkey
+		wantOK  bool
+		wantLen int
 	}{
 		{
-			name:   "empty stack, pop => not ok",
-			n:      1,
+			name:   "empty stack, pop once => not ok",
+			count:  1,
 			wantOK: false,
 		},
 	}
@@ -73,28 +68,24 @@ func TestPop(t *testing.T) {
 
 			s := tc.start
 			var (
-				got hexgrid.Vkey
+				got hex.Vkey
 				ok  bool
 			)
-			for n := 0; n < tc.n; n++ {
-				got, ok = s.pop()
+
+			for n := 0; n < tc.count; n++ {
+				got, _, ok = s.pop()
 			}
+
 			if ok != tc.wantOK {
-				t.Fatalf("s.pop() x%d -> ok = %v ; want %v", tc.n, ok, tc.wantOK)
+				t.Fatalf("s.pop() x%d -> ok = %v ; want %v", tc.count, ok, tc.wantOK)
 			}
+
 			if got != tc.want {
-				t.Fatalf("s.pop() x%d = %v ; want %v", tc.n, got, tc.want)
+				t.Fatalf("s.pop() x%d = %v ; want %v", tc.count, got, tc.want)
 			}
 
-			if len(s) != len(tc.after) {
-				t.Fatalf("pop() got len %d ; want %d", len(s), len(tc.after))
-			}
-
-			for i, val := range s {
-				if tc.after[i] != val {
-					t.Logf("got stack[%d] = %v ; want %v", i, val, tc.after[i])
-					t.Fail()
-				}
+			if len(s) != tc.wantLen {
+				t.Fatalf("pop() got len %d ; want %d", len(s), tc.wantLen)
 			}
 		})
 	}

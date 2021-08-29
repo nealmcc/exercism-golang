@@ -1,24 +1,38 @@
 package game
 
-import "connect/pkg/hexgrid"
+import "connect/pkg/hex"
 
-// stack is a stack of hexgrid.Vkey.
-type stack []hexgrid.Vkey
+type stack []stackitem
 
-// push an element on to the top of the stack.
-func (s *stack) push(k hexgrid.Vkey) {
-	*s = append(*s, k)
+type stackitem struct {
+	tile    hex.Vkey
+	visited map[hex.Vkey]bool
 }
 
-// pop an element off the top of the stack if possible.
-func (s *stack) pop() (hexgrid.Vkey, bool) {
+func (s *stack) push(tile hex.Vkey, visited map[hex.Vkey]bool) {
+	*s = append(*s, stackitem{
+		tile:    tile,
+		visited: clone(visited),
+	})
+}
+
+func clone(m map[hex.Vkey]bool) map[hex.Vkey]bool {
+	target := make(map[hex.Vkey]bool, len(m))
+	for key, val := range m {
+		target[key] = val
+	}
+	return target
+}
+
+func (s *stack) pop() (tile hex.Vkey, visited map[hex.Vkey]bool, ok bool) {
 	last := len(*s) - 1
 	if last == -1 {
-		return hexgrid.Vkey{}, false
+		ok = false
+		return
 	}
 
-	k := (*s)[last]
+	item := (*s)[last]
 	*s = (*s)[:last]
 
-	return k, true
+	return item.tile, item.visited, true
 }

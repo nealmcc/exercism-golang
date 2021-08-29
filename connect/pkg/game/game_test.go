@@ -15,15 +15,18 @@ func TestNew(t *testing.T) {
 			name:    "empty input -> error",
 			in:      nil,
 			wantErr: true,
-		}, {
+		},
+		{
 			name:    "bad input character -> error",
 			in:      []string{"q"},
 			wantErr: true,
-		}, {
+		},
+		{
 			name:    "non-square input -> error",
 			in:      []string{".", "", "."},
 			wantErr: true,
-		}, {
+		},
+		{
 			name: "pretty input -> error",
 			in: []string{
 				". . .  ",
@@ -31,11 +34,13 @@ func TestNew(t *testing.T) {
 				"  . . .",
 			},
 			wantErr: true,
-		}, {
+		},
+		{
 			name: "size one grid -> ok, the edges have a shape on them",
 			in:   []string{"."},
 			want: boardInfo{size: 1, x: 2, o: 2},
-		}, {
+		},
+		{
 			name: "size 3 board with Xs and Os -> ok",
 			in: []string{
 				"X.O",
@@ -77,7 +82,7 @@ func assertBoardMatches(t *testing.T, want boardInfo, got board) {
 	}
 
 	var x, o int
-	for _, shape := range got.grid {
+	for _, shape := range got.tiles {
 		switch shape {
 		case shapeX:
 			x++
