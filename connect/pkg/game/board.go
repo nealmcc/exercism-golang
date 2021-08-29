@@ -27,7 +27,8 @@ import (
 //
 // The bottom right corner is at position 4*SE + 4*East = (12, 4).
 type board struct {
-	size   int                // boards have equal width and height for fair play
+	width  int                // boards should have equal width and height for
+	height int                // fair play but this is not enforced.
 	top    hex.Vkey           // nominal top edge
 	right  hex.Vkey           // nominal right edge
 	bottom hex.Vkey           // nominal bottom edge
@@ -36,12 +37,13 @@ type board struct {
 }
 
 // newBoard initializes a new, empty board of the given size.
-func newBoard(size int) board {
+func newBoard(width, height int) board {
 	b := board{
-		size:   size,
+		width:  width,
+		height: height,
 		top:    hex.NE,
-		right:  hex.East.Times(size),
-		bottom: hex.SE.Times(size),
+		right:  hex.East.Times(width),
+		bottom: hex.SE.Times(height),
 		left:   hex.SW,
 		tiles:  make(map[hex.Vkey]shape, 4),
 	}
@@ -58,19 +60,21 @@ func newBoard(size int) board {
 // 'X' and 'O' are the shapes used by playerLeft and playerTop, respectively.
 // '.' is an empty tile.
 //
-// parseBoard will return an error if the input is empty, not square,
+// parseBoard will return an error if the input is empty, not a rhombus,
 // or contains invalid characters.
 func parseBoard(lines []string) (board, error) {
-	size := len(lines)
-	if size == 0 {
+	height := len(lines)
+	if height == 0 {
 		return board{}, errors.New("a board must have at least 1 tile")
 	}
 
-	b := newBoard(size)
+	width := len(lines[0])
+
+	b := newBoard(width, height)
 
 	for y, row := range lines {
-		if len(row) != size {
-			return board{}, errors.New("a board must be a regular rhombus")
+		if len(row) != width {
+			return board{}, errors.New("a board must be a rhombus")
 		}
 		key := hex.SE.Times(y)
 		for _, symbol := range []byte(row) {
@@ -161,28 +165,28 @@ func (b board) areAdjacent(k1, k2 hex.Vkey) bool {
 
 	switch k2 {
 	case b.top:
-		for n := 0; n < b.size; n++ {
+		for n := 0; n < b.width; n++ {
 			if k1 == hex.East.Times(n) {
 				return true
 			}
 		}
 
 	case b.right:
-		for n := 0; n < b.size; n++ {
-			if k1 == hex.East.Times(b.size-1).Plus(hex.SE.Times(n)) {
+		for n := 0; n < b.height; n++ {
+			if k1 == hex.East.Times(b.width-1).Plus(hex.SE.Times(n)) {
 				return true
 			}
 		}
 
 	case b.bottom:
-		for n := 0; n < b.size; n++ {
-			if k1 == hex.SE.Times(b.size-1).Plus(hex.East.Times(n)) {
+		for n := 0; n < b.width; n++ {
+			if k1 == hex.SE.Times(b.height-1).Plus(hex.East.Times(n)) {
 				return true
 			}
 		}
 
 	case b.left:
-		for n := 0; n < b.size; n++ {
+		for n := 0; n < b.height; n++ {
 			if k1 == hex.SE.Times(n) {
 				return true
 			}
@@ -219,12 +223,12 @@ func (b board) isInternal(k hex.Vkey) bool {
 	}
 
 	// right edge or beyond:
-	if k.X >= k.Y+2*b.size {
+	if k.X >= k.Y+2*b.width {
 		return false
 	}
 
 	// top and bottom edges or beyond:
-	if k.Y < 0 || k.Y >= b.size {
+	if k.Y < 0 || k.Y >= b.height {
 		return false
 	}
 

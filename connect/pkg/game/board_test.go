@@ -8,8 +8,8 @@ import (
 
 func TestAreAdjacent(t *testing.T) {
 	var (
-		tiny   board = newBoard(1)
-		little board = newBoard(2)
+		tiny   board = newBoard(1, 1)
+		little board = newBoard(2, 2)
 	)
 
 	tt := []struct {

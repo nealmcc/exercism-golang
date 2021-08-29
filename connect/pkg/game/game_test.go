@@ -38,7 +38,7 @@ func TestNew(t *testing.T) {
 		{
 			name: "size one grid -> ok, the edges have a shape on them",
 			in:   []string{"."},
-			want: boardInfo{size: 1, x: 2, o: 2},
+			want: boardInfo{width: 1, height: 1, x: 2, o: 2},
 		},
 		{
 			name: "size 3 board with Xs and Os -> ok",
@@ -47,7 +47,7 @@ func TestNew(t *testing.T) {
 				".XO",
 				"OOX",
 			},
-			want: boardInfo{size: 3, x: 5, o: 6},
+			want: boardInfo{width: 3, height: 3, x: 5, o: 6},
 		},
 	}
 	for _, tc := range tt {
@@ -70,14 +70,18 @@ func TestNew(t *testing.T) {
 }
 
 type boardInfo struct {
-	size int
-	x    int
-	o    int
+	width, height int
+	x, o          int
 }
 
 func assertBoardMatches(t *testing.T, want boardInfo, got board) {
-	if got.size != want.size {
-		t.Logf("got size %d ; want size %d", got.size, want.size)
+	if got.width != want.width {
+		t.Logf("got width %d ; want width %d", got.width, want.width)
+		t.Fail()
+	}
+
+	if got.height != want.height {
+		t.Logf("got height %d ; want height %d", got.height, want.height)
 		t.Fail()
 	}
 
