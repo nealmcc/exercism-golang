@@ -1,4 +1,4 @@
-// Package hex implements a hexagonal tile system in two dimensions.
+// Package hex implements an hexagonal tile system in two dimensions.
 // Y increases moving South, and decreases moving North.
 // X increases moving East, and decreases moving West.
 // Tiles can be arranged along three axes:
@@ -8,25 +8,6 @@
 package hex
 
 import "math"
-
-// Vector is a floating-point 2d coordinate.
-type Vector struct {
-	X, Y float64
-}
-
-// Size returns the length of the receiver.
-func (v Vector) Size() float64 {
-	x2 := math.Pow(v.X, 2)
-	y2 := math.Pow(v.Y, 2)
-	return math.Sqrt(x2 + y2)
-}
-
-// Dist measures the distance between Vectors a and b.
-func Dist(a, b Vector) float64 {
-	x2 := math.Pow(a.X-b.X, 2)
-	y2 := math.Pow(a.Y-b.Y, 2)
-	return math.Sqrt(x2 + y2)
-}
 
 // Vkey is the logical identifier for a tile on a hexagonal grid where
 // the distance between the center points of adjacent tiles is 1 unit.
@@ -96,4 +77,23 @@ func (k Vkey) ToVector() Vector {
 	x := float64(k.X) * cos60
 	y := float64(k.Y) * sin60
 	return Vector{x, y}
+}
+
+// Vector is a floating-point 2d coordinate.
+type Vector struct {
+	X, Y float64
+}
+
+// Size returns the length of the receiver.
+func (v Vector) Size() float64 {
+	x2 := math.Pow(v.X, 2)
+	y2 := math.Pow(v.Y, 2)
+	return math.Sqrt(x2 + y2)
+}
+
+// Dist measures the distance between Vectors a and b.
+func Dist(a, b Vector) float64 {
+	x2 := math.Pow(a.X-b.X, 2)
+	y2 := math.Pow(a.Y-b.Y, 2)
+	return math.Sqrt(x2 + y2)
 }
