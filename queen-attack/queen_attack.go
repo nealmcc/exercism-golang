@@ -4,7 +4,6 @@ package queenattack
 
 import (
 	"errors"
-	"math"
 )
 
 // CanQueenAttack accepts the position of two opposing queens on a chessboard,
@@ -34,6 +33,7 @@ func CanQueenAttack(w, b string) (bool, error) {
 		return true, nil
 	default:
 		dx, dy := int(b[0])-int(w[0]), int(b[1])-int(w[1])
-		return math.Abs(float64(dy)) == math.Abs(float64(dx)), nil
+		slope := float64(dy) / float64(dx)
+		return slope == 1 || slope == -1, nil
 	}
 }
