@@ -7,10 +7,9 @@ import (
 )
 
 // CanQueenAttack accepts the position of two opposing queens on a chessboard,
-// and determines if they can attack each other.  The position of the queens
-// are given in standard chess notation: a1 to h8.  If either piece is off
-// the board, or the chess notation is not used, CanQueenAttack will return
-// an error.
+// and determines if they can attack each other.
+// The position of each queen must be given in algebraic notation: a1 to h8,
+// and the queens cannot be on the same square.
 func CanQueenAttack(w, b string) (bool, error) {
 	if w == b {
 		return false, errors.New("chess pieces cannot share the same square")
